@@ -1,0 +1,17 @@
+.text {
+  color: var(--color-text);
+  margin-bottom: var(--space-6);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--space-3);
+}
+
+@media (min-width: 900px) {
+  .actions {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+}

@@ -1,0 +1,61 @@
+.host {
+  position: fixed;
+  left: var(--space-4);
+  right: var(--space-4);
+  /* Above the bottom navigation on mobile. */
+  bottom: calc(var(--bottom-nav-h) + var(--space-4) + env(safe-area-inset-bottom));
+  z-index: var(--z-notice);
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: 420px;
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+  border: 1px solid;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  pointer-events: auto;
+}
+
+.success {
+  background: var(--color-success-soft);
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+.error {
+  background: var(--color-danger-soft);
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.message {
+  flex: 1;
+  font-weight: 600;
+}
+
+.dismiss {
+  display: grid;
+  place-items: center;
+  width: var(--tap-min);
+  height: var(--tap-min);
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: inherit;
+}
+
+@media (min-width: 900px) {
+  .host {
+    bottom: var(--space-6);
+    left: calc(var(--sidebar-w) + var(--space-6));
+    right: auto;
+    justify-content: flex-start;
+  }
+}

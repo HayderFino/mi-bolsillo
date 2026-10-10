@@ -1,0 +1,150 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding-bottom: var(--space-8);
+}
+
+.header {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.totalAmount {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.listItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.listItem:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.listItem:first-child {
+  padding-top: 0;
+}
+
+.itemLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.itemName {
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.itemAmount {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.emptyState {
+  color: var(--color-text-muted);
+  font-style: italic;
+  margin: 0;
+}
+
+.budgetRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.budgetRow:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.budgetRow:first-child {
+  padding-top: 0;
+}
+
+.budgetHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.budgetName {
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.budgetAmounts {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.budgetBarBg {
+  height: 8px;
+  background-color: var(--color-primary-soft);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  width: 100%;
+}
+
+.budgetBarFill {
+  height: 100%;
+  background-color: var(--color-primary);
+  border-radius: var(--radius-full);
+  transition: width 0.3s ease;
+}
+
+.budgetBarFill[data-status="exceeded"] {
+  background-color: var(--color-danger);
+}
+
+.budgetBarFill[data-status="warning"] {
+  background-color: var(--color-warning);
+}
+
+.budgetStats {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
