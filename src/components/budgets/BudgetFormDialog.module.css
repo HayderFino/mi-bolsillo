@@ -1,0 +1,64 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.categoryName {
+  margin: 0;
+  font-weight: 500;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.amountWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.prefix {
+  position: absolute;
+  left: var(--spacing-sm);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.amountInput {
+  padding-left: 2rem;
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-lg);
+  font-weight: 500;
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--border);
+}
+
+.submitActions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+/* On very small screens, stack everything */
+@media (max-width: 360px) {
+  .actions {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+  
+  .submitActions {
+    width: 100%;
+    flex-direction: column-reverse;
+  }
+  
+  .submitActions > button, 
+  .actions > button {
+    width: 100%;
+  }
+}

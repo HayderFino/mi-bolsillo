@@ -1,0 +1,136 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.header {
+  margin-bottom: var(--spacing-md);
+}
+
+.title {
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  margin: 0;
+}
+
+.loading {
+  color: var(--text-muted);
+  text-align: center;
+  padding: var(--spacing-xl);
+}
+
+.empty {
+  color: var(--text-muted);
+  text-align: center;
+  padding: var(--spacing-xl);
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stats {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.statsText {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-xs);
+}
+
+.spent {
+  font-size: var(--text-xl);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.limit {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.barBg {
+  height: 8px;
+  background: var(--surface-hover);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 4px;
+  background-color: var(--color-success);
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.barFill[data-status="warning"] {
+  background-color: var(--color-warning);
+}
+
+.barFill[data-status="exceeded"] {
+  background-color: var(--color-danger);
+}
+
+.statusText {
+  margin: 0;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  text-transform: uppercase;
+  color: var(--color-success);
+}
+
+.statusText[data-status="warning"] {
+  color: var(--color-warning);
+}
+
+.statusText[data-status="exceeded"] {
+  color: var(--color-danger);
+}
+
+.notSet {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-style: italic;
+}
+
+.spentOnly {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+/* On desktop, grid layout for cards */
+@media (min-width: 768px) {
+  .list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
+}

@@ -78,6 +78,11 @@ export function DashboardPage() {
                     className={classes.budgetBarFill} 
                     style={{ width: `${percent}%` }}
                     data-status={status}
+                    role="progressbar"
+                    aria-valuenow={spent}
+                    aria-valuemin={0}
+                    aria-valuemax={limit}
+                    aria-label={`Progreso del presupuesto de ${category!.name}`}
                   />
                 </div>
                 <div className={classes.budgetStats}>

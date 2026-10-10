@@ -10,6 +10,9 @@ export const es = {
     retry: 'Reintentar',
     clearFilters: 'Limpiar filtros',
     unexpectedError: 'Ocurrió un error inesperado. Inténtalo de nuevo.',
+    selectMonth: 'Seleccionar mes',
+    prevMonth: 'Mes anterior',
+    nextMonth: 'Mes siguiente',
   },
 
   boot: {
@@ -86,6 +89,30 @@ export const es = {
         `Se eliminará «${description}» por ${amount}. Esta acción no se puede deshacer.`,
       confirm: 'Eliminar',
     },
+  },
+
+  budgets: {
+    pageTitle: 'Presupuestos',
+    setBudget: 'Definir presupuesto',
+    editBudget: 'Editar presupuesto',
+    noCategoryAvailable: 'No hay categorías disponibles.',
+    form: {
+      limitAmount: 'Límite (COP)',
+      submitCreate: 'Guardar',
+      submitEdit: 'Actualizar',
+      delete: 'Eliminar presupuesto',
+    },
+    confirmDelete: {
+      title: '¿Eliminar presupuesto?',
+      text: (categoryName: string) => `Se eliminará el límite de presupuesto para «${categoryName}» en este mes.`,
+      confirm: 'Eliminar',
+    },
+    notSet: 'Sin presupuesto',
+    status: {
+      ok: 'Normal',
+      warning: 'Advertencia',
+      exceeded: 'Excedido',
+    }
   },
 
   form: {

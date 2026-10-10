@@ -8,8 +8,8 @@ import {
 import type { Budget, Category, Expense } from '../src/types'
 
 describe('statisticsService', () => {
-  const cat1: Category = { id: 1, name: 'Comida', icon: '🍔', color: '#ff0000', active: true, order: 1 }
-  const cat2: Category = { id: 2, name: 'Transporte', icon: '🚗', color: '#00ff00', active: true, order: 2 }
+  const cat1: Category = { id: 1, name: 'Comida', icon: '🍔', color: '#ff0000', active: true }
+  const cat2: Category = { id: 2, name: 'Transporte', icon: '🚗', color: '#00ff00', active: true }
   const categories = [cat1, cat2]
 
   const month = '2023-10'
@@ -119,7 +119,7 @@ describe('statisticsService', () => {
     })
 
     it('ignores category without budget', () => {
-      const cat3: Category = { id: 3, name: 'Ocio', icon: '🎮', color: '#0000ff', active: true, order: 3 }
+      const cat3: Category = { id: 3, name: 'Ocio', icon: '🎮', color: '#0000ff', active: true }
       const allCategories = [...categories, cat3]
       
       const expenses = [

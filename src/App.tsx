@@ -5,6 +5,7 @@ import { ExpenseFormDialog } from './components/expenses/ExpenseFormDialog'
 import type { Notice } from './components/ui/NoticeHost'
 import { useHashRoute } from './hooks/useHashRoute'
 import { es } from './i18n/es'
+import { BudgetsPage } from './pages/Budgets'
 import { ComingSoonPage } from './pages/ComingSoon'
 import { DashboardPage } from './pages/Dashboard'
 import { ExpensesPage } from './pages/Expenses'
@@ -45,7 +46,7 @@ function App() {
           />
         )}
         {route === 'panel' && <DashboardPage />}
-        {route === 'presupuestos' && <ComingSoonPage title={es.nav.budgets} />}
+        {route === 'presupuestos' && <BudgetsPage />}
         {route === 'categorias' && <ComingSoonPage title={es.nav.categories} />}
         {route === 'ajustes' && <ComingSoonPage title={es.nav.settings} />}
       </AppShell>
