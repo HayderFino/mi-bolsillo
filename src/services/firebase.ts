@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth, GoogleAuthProvider } from 'firebase/auth'
-import { getFirestore } from 'firebase/firestore'
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore'
 
 // Firebase configuration provided for "finanzas-77a26"
 const firebaseConfig = {
@@ -18,4 +18,7 @@ export const auth = getAuth(firebaseApp)
 export const googleAuthProvider = new GoogleAuthProvider()
 googleAuthProvider.setCustomParameters({ prompt: 'select_account' })
 
-export const firestore = getFirestore(firebaseApp)
+export const firestore = initializeFirestore(firebaseApp, {
+  experimentalAutoDetectLongPolling: true,
+  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+})

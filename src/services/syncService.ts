@@ -75,44 +75,62 @@ export async function initUserSync(uid: string): Promise<() => void> {
     }
 
     // Set up real-time listener for categories
-    const unsubCategories = onSnapshot(categoriesCol, async (snapshot) => {
-      for (const change of snapshot.docChanges()) {
-        const cat = change.doc.data() as Category
-        if (change.type === 'added' || change.type === 'modified') {
-          await db.categories.put(cat)
-        } else if (change.type === 'removed') {
-          await db.categories.delete(Number(change.doc.id))
+    const unsubCategories = onSnapshot(
+      categoriesCol,
+      async (snapshot) => {
+        for (const change of snapshot.docChanges()) {
+          const cat = change.doc.data() as Category
+          if (change.type === 'added' || change.type === 'modified') {
+            await db.categories.put(cat)
+          } else if (change.type === 'removed') {
+            await db.categories.delete(Number(change.doc.id))
+          }
         }
+      },
+      (err) => {
+        console.warn('Sincronización de categorías en pausa (modo local activo):', err.message)
       }
-    })
+    )
 
     // Set up real-time listener for budgets
-    const unsubBudgets = onSnapshot(budgetsCol, async (snapshot) => {
-      for (const change of snapshot.docChanges()) {
-        const bgt = change.doc.data() as Budget
-        if (change.type === 'added' || change.type === 'modified') {
-          await db.budgets.put(bgt)
-        } else if (change.type === 'removed') {
-          await db.budgets.delete(change.doc.id)
+    const unsubBudgets = onSnapshot(
+      budgetsCol,
+      async (snapshot) => {
+        for (const change of snapshot.docChanges()) {
+          const bgt = change.doc.data() as Budget
+          if (change.type === 'added' || change.type === 'modified') {
+            await db.budgets.put(bgt)
+          } else if (change.type === 'removed') {
+            await db.budgets.delete(change.doc.id)
+          }
         }
+      },
+      (err) => {
+        console.warn('Sincronización de presupuestos en pausa (modo local activo):', err.message)
       }
-    })
+    )
 
     // Set up real-time listener for expenses
-    const unsubExpenses = onSnapshot(expensesCol, async (snapshot) => {
-      for (const change of snapshot.docChanges()) {
-        const exp = change.doc.data() as Expense
-        if (change.type === 'added' || change.type === 'modified') {
-          await db.expenses.put(exp)
-        } else if (change.type === 'removed') {
-          await db.expenses.delete(Number(change.doc.id))
+    const unsubExpenses = onSnapshot(
+      expensesCol,
+      async (snapshot) => {
+        for (const change of snapshot.docChanges()) {
+          const exp = change.doc.data() as Expense
+          if (change.type === 'added' || change.type === 'modified') {
+            await db.expenses.put(exp)
+          } else if (change.type === 'removed') {
+            await db.expenses.delete(Number(change.doc.id))
+          }
         }
+      },
+      (err) => {
+        console.warn('Sincronización de gastos en pausa (modo local activo):', err.message)
       }
-    })
+    )
 
     activeListeners = [unsubCategories, unsubBudgets, unsubExpenses]
   } catch (error) {
-    console.error('Error during Firestore synchronization:', error)
+    console.warn('Error durante la sincronización inicial con Firestore (continuando en modo local):', error)
   }
 
   return stopUserSync
