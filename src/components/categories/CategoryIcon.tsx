@@ -12,39 +12,52 @@ import {
   Coffee,
   Gift,
   Briefcase,
-  Smile,
   Smartphone,
-  Book,
   Music,
   Scissors,
   Wrench,
-  CircleHelp
+  CircleHelp,
+  Monitor,
+  Pill,
+  Baby,
+  Dog,
+  Film,
+  Bus,
+  ShoppingBag
 } from 'lucide-react'
 import type { AllowedIcon } from '../../constants/categoryAppearance'
 import type { LucideIcon } from 'lucide-react'
 
-const iconMap: Record<AllowedIcon, LucideIcon> = {
+const iconMap: Record<AllowedIcon, LucideIcon> & Record<string, LucideIcon> = {
+  // Allowed icons
   'utensils': Utensils,
-  // bus: Bus removed as it is not allowed
-  'home': House,
   'shopping-cart': ShoppingCart,
-  'heart-pulse': HeartPulse,
-  'graduation-cap': GraduationCap,
-  'clapperboard': Clapperboard,
-  'ellipsis': Ellipsis,
   'car': Car,
+  'home': House,
   'zap': Zap,
+  'smartphone': Smartphone,
+  'monitor': Monitor,
+  'briefcase': Briefcase,
+  'graduation-cap': GraduationCap,
+  'heart-pulse': HeartPulse,
+  'pill': Pill,
+  'baby': Baby,
+  'dog': Dog,
   'plane': Plane,
   'coffee': Coffee,
   'gift': Gift,
-  'briefcase': Briefcase,
-  'smile': Smile,
-  'smartphone': Smartphone,
-  'book': Book,
+  'film': Film,
   'music': Music,
   'scissors': Scissors,
   'wrench': Wrench,
-  'circle-help': CircleHelp
+  'circle-help': CircleHelp,
+
+  // Legacy / seed aliases
+  'house': House,
+  'bus': Bus,
+  'shopping-bag': ShoppingBag,
+  'clapperboard': Clapperboard,
+  'ellipsis': Ellipsis,
 }
 
 interface Props {

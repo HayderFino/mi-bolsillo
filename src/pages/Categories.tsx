@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Edit2, Archive, ArchiveRestore, Trash2, Activity } from 'lucide-react'
+import { useLiveQuery } from 'dexie-react-hooks'
 import type { Category, NewCategory } from '../types'
 import { listCategories, updateCategory, createCategory, deleteCategory, getCategoryExpenseCount } from '../services/categoryService'
 import { CategoryIcon } from '../components/categories/CategoryIcon'
@@ -19,40 +20,24 @@ interface CategoriesPageProps {
 }
 
 export function CategoriesPage({ onNotify, onNavigateToHistory }: CategoriesPageProps) {
-  const [categories, setCategories] = useState<CategoryWithState[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const categoriesWithCounts = useLiveQuery(async () => {
+    const data = await listCategories({ includeInactive: true })
+    return Promise.all(
+      data.map(async (c) => {
+        const count = await getCategoryExpenseCount(c.id)
+        return { ...c, expenseCount: count }
+      })
+    )
+  }, [])
+
+  const categories = categoriesWithCounts ?? []
+  const isLoading = categoriesWithCounts === undefined
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   
   // Confirm dialog state
   const [pendingDelete, setPendingDelete] = useState<CategoryWithState | null>(null)
   const [deleting, setDeleting] = useState(false)
-
-  const loadCategories = async () => {
-    try {
-      setIsLoading(true)
-      const data = await listCategories({ includeInactive: true })
-      
-      const withCounts = await Promise.all(
-        data.map(async (c) => {
-          const count = await getCategoryExpenseCount(c.id)
-          return { ...c, expenseCount: count }
-        })
-      )
-      
-      setCategories(withCounts)
-    } catch {
-      onNotify('Error al cargar las categorías', 'error')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  // Load manually on mount
-  useEffect(() => {
-    void loadCategories()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   const handleSave = async (categoryData: NewCategory | Category) => {
     if ('id' in categoryData) {
@@ -63,14 +48,12 @@ export function CategoriesPage({ onNotify, onNavigateToHistory }: CategoriesPage
       onNotify('Categoría creada', 'success')
     }
     setDialogOpen(false)
-    await loadCategories()
   }
 
   const handleToggleActive = async (category: CategoryWithState) => {
     try {
       await updateCategory(category.id, { active: !category.active })
       onNotify(category.active ? 'Categoría desactivada' : 'Categoría activada', 'success')
-      await loadCategories()
     } catch (error) {
       onNotify(error instanceof Error ? error.message : 'Error al cambiar estado', 'error')
     }
@@ -82,7 +65,6 @@ export function CategoriesPage({ onNotify, onNavigateToHistory }: CategoriesPage
     try {
       await deleteCategory(pendingDelete.id)
       onNotify('Categoría eliminada', 'success')
-      await loadCategories()
     } catch (error) {
       onNotify(error instanceof Error ? error.message : 'Error al eliminar la categoría', 'error')
     } finally {

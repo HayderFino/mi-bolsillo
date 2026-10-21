@@ -4,6 +4,7 @@ import { APP_NAME } from './src/types/index.ts'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: './',
   plugins: [
     react(),
     {
