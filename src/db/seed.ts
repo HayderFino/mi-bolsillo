@@ -1,4 +1,4 @@
-import type { NewCategory } from '../types'
+import type { NewCategory, NewIncomeCategory } from '../types'
 import { db } from './database'
 
 /** Icons are Lucide icon names (kebab-case); resolved to components in the UI phase. */
@@ -27,6 +27,30 @@ export async function seedDefaultCategories(): Promise<boolean> {
     if (await db.meta.get(SEEDED_KEY)) return false
     await db.categories.bulkAdd(DEFAULT_CATEGORIES.map((category) => ({ ...category, active: true })))
     await db.meta.put({ key: SEEDED_KEY, value: true })
+    return true
+  })
+}
+
+/** Icons are Lucide icon names (kebab-case), limited to the allowed list. */
+export const DEFAULT_INCOME_CATEGORIES: readonly NewIncomeCategory[] = [
+  { name: 'Salario', icon: 'briefcase', color: '#2F7D5B' },
+  { name: 'Freelance', icon: 'monitor', color: '#2B5D8A' },
+  { name: 'Negocio propio', icon: 'shopping-cart', color: '#7B4F8A' },
+  { name: 'Regalo', icon: 'gift', color: '#C27C2C' },
+  { name: 'Reembolso', icon: 'wrench', color: '#8A6D3B' },
+  { name: 'Otros', icon: 'circle-help', color: '#6B7280' },
+]
+
+const INCOME_SEEDED_KEY = 'defaultIncomeCategoriesSeeded'
+
+/** Creates the default income categories exactly once (same pattern as expense categories). */
+export async function seedDefaultIncomeCategories(): Promise<boolean> {
+  return db.transaction('rw', db.incomeCategories, db.meta, async () => {
+    if (await db.meta.get(INCOME_SEEDED_KEY)) return false
+    await db.incomeCategories.bulkAdd(
+      DEFAULT_INCOME_CATEGORIES.map((category) => ({ ...category, active: true })),
+    )
+    await db.meta.put({ key: INCOME_SEEDED_KEY, value: true })
     return true
   })
 }

@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react'
 
-export const ROUTES = ['panel', 'gastos', 'presupuestos', 'categorias', 'ajustes'] as const
+export const ROUTES = ['panel', 'gastos', 'ingresos', 'presupuestos', 'categorias', 'ajustes'] as const
 export type Route = (typeof ROUTES)[number]
 
 /** Until the dashboard exists (Phase 5), the app opens on the expenses page. */

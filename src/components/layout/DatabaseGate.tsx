@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { Database } from 'lucide-react'
 import { es } from '../../i18n/es'
 import { ensureDefaultCategories } from '../../services/categoryService'
+import { seedDefaultIncomeCategories } from '../../db/seed'
 import { Button } from '../ui/Button'
 import { EmptyState } from '../ui/EmptyState'
 import styles from './DatabaseGate.module.css'
@@ -19,7 +20,7 @@ export function DatabaseGate({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false
-    ensureDefaultCategories().then(
+    Promise.all([ensureDefaultCategories(), seedDefaultIncomeCategories()]).then(
       () => {
         if (!cancelled) setStatus('ready')
       },

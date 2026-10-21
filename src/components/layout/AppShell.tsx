@@ -7,6 +7,7 @@ import {
   Receipt,
   Settings,
   Tags,
+  Wallet,
   type LucideIcon,
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
@@ -18,6 +19,7 @@ import styles from './AppShell.module.css'
 const NAV_ITEMS: { route: Route; label: string; icon: LucideIcon }[] = [
   { route: 'panel', label: es.nav.dashboard, icon: LayoutDashboard },
   { route: 'gastos', label: es.nav.expenses, icon: Receipt },
+  { route: 'ingresos', label: es.nav.incomes, icon: Wallet },
   { route: 'presupuestos', label: es.nav.budgets, icon: PiggyBank },
   { route: 'categorias', label: es.nav.categories, icon: Tags },
   { route: 'ajustes', label: es.nav.settings, icon: Settings },

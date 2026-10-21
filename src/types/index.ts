@@ -38,8 +38,34 @@ export interface Budget {
   limitAmount: number
 }
 
+/** Income category: own list, independent from expense categories. */
+export interface IncomeCategory {
+  id: number
+  name: string
+  icon: string
+  color: string
+  active: boolean
+}
+
+export interface Income {
+  id: number
+  /** Positive integer, COP. */
+  amount: number
+  description: string
+  /** Local date, `YYYY-MM-DD`. */
+  date: string
+  incomeCategoryId: number
+  paymentMethod: PaymentMethod
+  /** ISO 8601. */
+  createdAt: string
+  /** ISO 8601. */
+  updatedAt: string
+}
+
 export type NewExpense = Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>
 export type NewCategory = Omit<Category, 'id' | 'active'>
+export type NewIncome = Omit<Income, 'id' | 'createdAt' | 'updatedAt'>
+export type NewIncomeCategory = Omit<IncomeCategory, 'id' | 'active'>
 
 /** Typed error thrown by the service layer; `message` is user-readable (Spanish). */
 export class ServiceError extends Error {

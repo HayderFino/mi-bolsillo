@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { db } from '../src/db/database'
-import { seedDefaultCategories } from '../src/db/seed'
+import { seedDefaultCategories, seedDefaultIncomeCategories } from '../src/db/seed'
 import {
   BACKUP_FORMAT_VERSION,
   backupFileName,
@@ -53,6 +53,22 @@ async function seedSampleData() {
     yearMonth: '2025-03',
     limitAmount: 500000,
   })
+  const incomeCategory = await db.incomeCategories.add({
+    name: 'Salario',
+    icon: 'briefcase',
+    color: '#2F7D5B',
+    active: true,
+  })
+  await db.incomes.add({
+    id: 1,
+    amount: 2500000,
+    description: 'Salario de marzo',
+    date: '2025-03-01',
+    incomeCategoryId: incomeCategory,
+    paymentMethod: 'transferencia',
+    createdAt: '2025-03-01T12:00:00.000Z',
+    updatedAt: '2025-03-01T12:00:00.000Z',
+  })
   return category
 }
 
@@ -61,7 +77,7 @@ function backupWith(data: Record<string, unknown[]>): string {
     app: 'mi-bolsillo',
     version: BACKUP_FORMAT_VERSION,
     exportedAt: '2026-10-20T10:00:00.000Z',
-    data,
+    data: { incomes: [], incomeCategories: [], ...data },
   })
 }
 
@@ -76,6 +92,8 @@ describe('export', () => {
     expect(backup.data.categories).toHaveLength(8)
     expect(backup.data.expenses).toHaveLength(1)
     expect(backup.data.budgets).toHaveLength(1)
+    expect(backup.data.incomeCategories).toHaveLength(1)
+    expect(backup.data.incomes).toHaveLength(1)
     expect(backup.data.expenses[0].categoryId).toBe(category.id)
   })
 
@@ -118,7 +136,13 @@ describe('validation', () => {
 
   it('accepts a backup with empty tables', async () => {
     const parsed = parseBackup(backupWith({ expenses: [], categories: [], budgets: [] }))
-    expect(parsed.data).toEqual({ expenses: [], categories: [], budgets: [] })
+    expect(parsed.data).toEqual({
+      expenses: [],
+      categories: [],
+      budgets: [],
+      incomes: [],
+      incomeCategories: [],
+    })
   })
 
   it('rejects invalid expense records', async () => {
@@ -201,20 +225,39 @@ describe('restore', () => {
 
     const summary = await restoreBackup(backup)
 
-    expect(summary).toEqual({ expenses: 1, categories: 8, budgets: 1 })
+    expect(summary).toEqual({ expenses: 1, categories: 8, budgets: 1, incomes: 1, incomeCategories: 1 })
     expect(await db.categories.get(500)).toBeUndefined()
     expect(await db.expenses.get(501)).toBeUndefined()
 
     const expense = (await db.expenses.get(1))!
     expect(await db.categories.get(expense.categoryId)).toBeDefined()
     expect(await db.budgets.get(`${expense.categoryId}_2025-03`)).toBeDefined()
+
+    const income = (await db.incomes.get(1))!
+    expect(await db.incomeCategories.get(income.incomeCategoryId)).toBeDefined()
   })
 
   it('keeps the seed flag so default categories are never re-created', async () => {
     const backup = await collectBackup()
-    expect(await restoreBackup(backup)).toEqual({ expenses: 0, categories: 0, budgets: 0 })
+    expect(await restoreBackup(backup)).toEqual({ expenses: 0, categories: 0, budgets: 0, incomes: 0, incomeCategories: 0 })
     expect(await seedDefaultCategories()).toBe(false)
+    expect(await seedDefaultIncomeCategories()).toBe(false)
     expect(await db.meta.get('defaultCategoriesSeeded')).toEqual({ key: 'defaultCategoriesSeeded', value: true })
+    expect(await db.meta.get('defaultIncomeCategoriesSeeded')).toEqual({
+      key: 'defaultIncomeCategoriesSeeded',
+      value: true,
+    })
+  })
+
+  it('rejects incomes that point to a category missing from the file', async () => {
+    const raw = backupWith({
+      categories: [],
+      incomeCategories: [],
+      expenses: [],
+      budgets: [],
+      incomes: [{ id: 1, amount: 1000, description: 'x', date: '2026-01-01', incomeCategoryId: 7, paymentMethod: 'efectivo', createdAt: 'a', updatedAt: 'a' }],
+    })
+    expect(await validationMessage(parse(raw))).toBe(MESSAGES.backupMissingIncomeCategory)
   })
 
   it('does not modify any table when the backup is invalid (all or nothing)', async () => {
@@ -249,11 +292,37 @@ describe('stats', () => {
   })
 
   it('returns zeros on an empty database', async () => {
-    expect(await collectStats()).toEqual({ expenses: 0, categories: 0, budgets: 0 })
+    expect(await collectStats()).toEqual({ expenses: 0, categories: 0, budgets: 0, incomes: 0, incomeCategories: 0 })
   })
 
   it('counts every table', async () => {
     await seedSampleData()
-    expect(await collectStats()).toEqual({ expenses: 1, categories: 8, budgets: 1 })
+    expect(await collectStats()).toEqual({ expenses: 1, categories: 8, budgets: 1, incomes: 1, incomeCategories: 1 })
+  })
+})
+
+describe('format v1 compatibility', () => {
+  it('imports a v1 file that has no income tables, restoring empty income data', async () => {
+    const category = { id: 1, name: 'Comida', icon: 'utensils', color: '#2F7D5B', active: true }
+    const v1 = JSON.stringify({
+      app: 'mi-bolsillo',
+      version: 1,
+      exportedAt: '2026-01-01T00:00:00.000Z',
+      data: {
+        categories: [category],
+        expenses: [{ id: 1, amount: 1000, description: 'x', date: '2026-01-01', categoryId: 1, paymentMethod: 'efectivo', createdAt: 'a', updatedAt: 'a' }],
+        budgets: [],
+      },
+    })
+
+    const parsed = parseBackup(v1)
+    expect(parsed.version).toBe(BACKUP_FORMAT_VERSION)
+    expect(parsed.data.incomes).toEqual([])
+    expect(parsed.data.incomeCategories).toEqual([])
+
+    const summary = await restoreBackup(parsed)
+    expect(summary).toEqual({ expenses: 1, categories: 1, budgets: 0, incomes: 0, incomeCategories: 0 })
+    expect(await db.expenses.count()).toBe(1)
+    expect(await db.incomes.count()).toBe(0)
   })
 })

@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Database, Download, Lock } from 'lucide-react'
+import { Database, Download, Lock, LogOut } from 'lucide-react'
 import { Button } from '../components/ui/Button'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import type { Notice } from '../components/ui/NoticeHost'
 import { es } from '../i18n/es'
+import { useAuth } from '../hooks/useAuth'
 import {
   backupFileName,
   collectBackup,
@@ -27,11 +28,13 @@ interface PendingRestore {
 }
 
 export function SettingsPage({ onNotify }: SettingsPageProps) {
-  const stats = useLiveQuery(() => collectStats(), [], { expenses: 0, categories: 0, budgets: 0 })
+  const stats = useLiveQuery(() => collectStats(), [], { expenses: 0, categories: 0, budgets: 0, incomes: 0, incomeCategories: 0 })
+  const { user, logout } = useAuth()
   const [exporting, setExporting] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
   const [pendingRestore, setPendingRestore] = useState<PendingRestore | null>(null)
   const [restoring, setRestoring] = useState(false)
+  const [signingOut, setSigningOut] = useState(false)
 
   async function handleExport() {
     setExporting(true)
@@ -82,6 +85,7 @@ export function SettingsPage({ onNotify }: SettingsPageProps) {
           summary.expenses,
           summary.categories,
           summary.budgets,
+          summary.incomes,
         ),
       })
       setPendingRestore(null)
@@ -107,9 +111,35 @@ export function SettingsPage({ onNotify }: SettingsPageProps) {
           {es.settings.account.title}
         </h2>
         <p className={styles.text}>{es.settings.account.description}</p>
+        {user && (
+          <p className={styles.text} style={{ fontWeight: 500 }}>
+            {es.settings.account.signedInAs(
+              user.displayName ?? user.email ?? 'Usuario',
+              user.email ?? ''
+            )}
+          </p>
+        )}
         <p className={styles.stats} aria-label={es.settings.account.statsLabel}>
-          {es.settings.account.stats(stats.expenses, stats.categories, stats.budgets)}
+          {es.settings.account.stats(
+            stats.expenses,
+            stats.categories,
+            stats.budgets,
+            stats.incomes,
+            stats.incomeCategories,
+          )}
         </p>
+        {user && (
+          <Button
+            onClick={async () => {
+              setSigningOut(true)
+              try { await logout() } finally { setSigningOut(false) }
+            }}
+            disabled={signingOut}
+          >
+            <LogOut aria-hidden="true" size={18} />
+            {signingOut ? es.settings.account.signingOut : es.settings.account.signOut}
+          </Button>
+        )}
       </section>
 
       <section className={styles.card} aria-labelledby="settings-backup-title">

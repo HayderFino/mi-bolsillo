@@ -8,9 +8,11 @@ import {
   calculateDistributionByCategory,
   calculateEvolutionByDay,
   calculateCategoryComparison,
-  calculateBudgetSummary
+  calculateBudgetSummary,
+  calculateTotalIncome,
+  calculateBalance,
 } from '../src/services/statisticsService'
-import type { Budget, Category, Expense } from '../src/types'
+import type { Budget, Category, Expense, Income } from '../src/types'
 
 describe('statisticsService', () => {
   const cat1: Category = { id: 1, name: 'Comida', icon: '🍔', color: '#ff0000', active: true }
@@ -320,5 +322,40 @@ describe('statisticsService', () => {
       expect(evoSum).toBe(total)
       expect(total).toBe(800)
     })
+  })
+})
+
+describe('income totals and balance', () => {
+  const income = (overrides: Partial<Income>): Income => ({
+    id: 1,
+    amount: 1000,
+    description: 'Ingreso',
+    date: '2023-10-05',
+    incomeCategoryId: 1,
+    paymentMethod: 'transferencia',
+    createdAt: '2023-10-05T10:00:00.000Z',
+    updatedAt: '2023-10-05T10:00:00.000Z',
+    ...overrides,
+  })
+
+  it('sums only the incomes of the requested month', () => {
+    const incomes = [
+      income({ id: 1, amount: 2000000, date: '2023-10-01' }),
+      income({ id: 2, amount: 500000, date: '2023-10-31' }),
+      income({ id: 3, amount: 9999999, date: '2023-11-01' }),
+      income({ id: 4, amount: 123, date: '2022-10-15' }),
+    ]
+    expect(calculateTotalIncome(incomes, '2023-10')).toBe(2500000)
+  })
+
+  it('returns 0 when there are no incomes (never invents data)', () => {
+    expect(calculateTotalIncome([], '2023-10')).toBe(0)
+    expect(calculateTotalIncome([income({ date: '2023-12-01' })], '2023-10')).toBe(0)
+  })
+
+  it('computes the balance as income minus expenses, positive or negative', () => {
+    expect(calculateBalance(3000000, 1200000)).toBe(1800000)
+    expect(calculateBalance(500000, 800000)).toBe(-300000)
+    expect(calculateBalance(0, 0)).toBe(0)
   })
 })

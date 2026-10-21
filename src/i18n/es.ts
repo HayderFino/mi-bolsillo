@@ -30,24 +30,32 @@ export const es = {
     categories: 'Categorías',
     settings: 'Ajustes',
     registerExpense: 'Registrar gasto',
+    incomes: 'Ingresos',
   },
 
   settings: {
     pageTitle: 'Ajustes',
     account: {
-      title: 'Cuenta y datos',
+      title: 'Cuenta y sincronización',
+      signedInAs: (name: string, email: string) => `Sesión iniciada como ${name} (${email})`,
+      signOut: 'Cerrar sesión',
+      signingOut: 'Cerrando sesión…',
       description:
-        'No hay cuentas ni servidores: todo se guarda solo en este navegador con el que estás usando ahora.',
-      stats: (expenses: number, categories: number, budgets: number) =>
-        `${expenses} ${expenses === 1 ? 'gasto' : 'gastos'} · ${categories} ${
-          categories === 1 ? 'categoría' : 'categorías'
-        } · ${budgets} ${budgets === 1 ? 'presupuesto' : 'presupuestos'}`,
-      statsLabel: 'Datos guardados en este navegador',
+        'Tus datos se guardan localmente en este navegador (IndexedDB) y se sincronizan automáticamente con tu cuenta de Google en Firebase.',
+      stats: (expenses: number, categories: number, budgets: number, incomes: number, incomeCategories: number) =>
+        `${expenses} ${expenses === 1 ? 'gasto' : 'gastos'} · ${
+          categories === 1 ? '1 categoría' : `${categories} categorías`
+        } · ${budgets} ${budgets === 1 ? 'presupuesto' : 'presupuestos'} · ${incomes} ${
+          incomes === 1 ? 'ingreso' : 'ingresos'
+        } · ${incomeCategories} ${
+          incomeCategories === 1 ? 'categoría de ingreso' : 'categorías de ingreso'
+        }`,
+      statsLabel: 'Datos guardados localmente',
     },
     backup: {
-      title: 'Copia de seguridad',
+      title: 'Copia de seguridad local',
       warning:
-        'IndexedDB no es una copia de seguridad: si borras los datos del navegador o cambias de dispositivo, puedes perder todo. Exporta un archivo JSON periódicamente.',
+        'Aunque tus datos se sincronizan con Firebase, exportar un archivo JSON periódicamente es una buena práctica adicional de seguridad.',
       exportTitle: 'Exportar',
       exportDescription: 'Descarga un archivo JSON con tus gastos, categorías y presupuestos.',
       exportButton: 'Exportar copia (JSON)',
@@ -58,10 +66,12 @@ export const es = {
         'Restaura una copia exportada antes. Los datos actuales se reemplazarán por los del archivo.',
       importButton: 'Elegir archivo…',
       importHint: 'Archivo JSON exportado desde esta aplicación.',
-      importSuccess: (expenses: number, categories: number, budgets: number) =>
-        `Copia restaurada: ${expenses} ${expenses === 1 ? 'gasto' : 'gastos'}, ${categories} ${
-          categories === 1 ? 'categoría' : 'categorías'
-        } y ${budgets} ${budgets === 1 ? 'presupuesto' : 'presupuestos'}.`,
+      importSuccess: (expenses: number, categories: number, budgets: number, incomes: number) =>
+        `Copia restaurada: ${expenses} ${expenses === 1 ? 'gasto' : 'gastos'}, ${
+          categories === 1 ? '1 categoría' : `${categories} categorías`
+        }, ${budgets} ${budgets === 1 ? 'presupuesto' : 'presupuestos'} y ${incomes} ${
+          incomes === 1 ? 'ingreso' : 'ingresos'
+        }.`,
       confirmTitle: '¿Reemplazar todos los datos?',
       confirmText: (fileName: string) =>
         `Se eliminarán los datos actuales de este navegador y se cargarán los del archivo «${fileName}». Esta acción no se puede deshacer.`,
@@ -69,9 +79,9 @@ export const es = {
     },
     privacy: {
       title: 'Privacidad y almacenamiento',
-      local: 'Tus datos no salen del navegador: no hay analítica ni peticiones externas con tu información.',
+      local: 'Tus datos se almacenan localmente (IndexedDB) y en tu cuenta privada de Firebase. Solo tú tienes acceso a ellos.',
       encryption:
-        'El almacenamiento local no está cifrado automáticamente; cualquier persona con acceso a tu perfil del navegador podría leerlo.',
+        'El almacenamiento local del navegador no está cifrado automáticamente. Asegúrate de proteger tu sesión de navegador.',
     },
   },
 
@@ -80,6 +90,9 @@ export const es = {
     created: 'Gasto registrado.',
     updated: 'Gasto actualizado.',
     deleted: 'Gasto eliminado.',
+    incomeCreated: 'Ingreso registrado.',
+    incomeUpdated: 'Ingreso actualizado.',
+    incomeDeleted: 'Ingreso eliminado.',
   },
 
   dashboard: {
@@ -90,6 +103,81 @@ export const es = {
     noExpenses: 'Aún no hay gastos este mes.',
     noBudgets: 'No has definido presupuestos este mes.',
     spentOf: (spent: string, total: string) => `${spent} de ${total}`,
+    totalIncome: 'Ingresado este mes',
+    balance: 'Balance',
+    balancePositiveLabel: 'A favor',
+    balanceNegativeLabel: 'En contra',
+  },
+
+  incomes: {
+    pageTitle: 'Ingresos',
+    register: 'Registrar ingreso',
+    loading: 'Cargando ingresos…',
+    noCategory: 'Sin categoría',
+    categoryLabel: 'Categoría',
+    count: (n: number) => (n === 1 ? '1 ingreso' : `${n} ingresos`),
+    total: 'Total',
+    tableCaption: 'Historial de ingresos',
+    columns: {
+      date: 'Fecha',
+      description: 'Descripción',
+      category: 'Categoría',
+      method: 'Método',
+      amount: 'Importe',
+      actions: 'Acciones',
+    },
+    editLabel: (description: string) => `Editar ingreso: ${description}`,
+    deleteLabel: (description: string) => `Eliminar ingreso: ${description}`,
+    empty: {
+      noneTitle: 'Aún no has registrado ingresos',
+      noneText: 'Registra tu primer ingreso para llevar el balance del mes.',
+      filteredTitle: 'Ningún ingreso coincide con los filtros',
+      filteredText: 'Prueba con otra búsqueda o limpia los filtros.',
+    },
+    confirmDelete: {
+      title: '¿Eliminar este ingreso?',
+      text: (description: string, amount: string) =>
+        `Se eliminará «${description}» por ${amount}. Esta acción no se puede deshacer.`,
+      confirm: 'Eliminar',
+    },
+  },
+
+  incomeForm: {
+    createTitle: 'Registrar ingreso',
+    editTitle: 'Editar ingreso',
+    amount: 'Importe (COP)',
+    description: 'Descripción',
+    date: 'Fecha',
+    category: 'Categoría',
+    categoryPlaceholder: 'Selecciona una categoría',
+    inactiveSuffix: ' (desactivada)',
+    paymentMethod: 'Método de recepción',
+    submitCreate: 'Registrar ingreso',
+    submitEdit: 'Guardar cambios',
+    saving: 'Guardando…',
+    errors: {
+      amountRequired: 'Ingresa el importe.',
+      dateRequired: 'Ingresa una fecha válida.',
+      categoryRequired: 'Selecciona una categoría.',
+    },
+  },
+
+  incomeFilters: {
+    search: 'Buscar por descripción',
+    toggle: 'Filtros',
+    period: 'Periodo',
+    periods: {
+      all: 'Todo el historial',
+      month: 'Este mes',
+      prevMonth: 'Mes anterior',
+      custom: 'Rango personalizado',
+    },
+    from: 'Desde',
+    to: 'Hasta',
+    category: 'Categoría',
+    allCategories: 'Todas las categorías',
+    paymentMethod: 'Método',
+    allPaymentMethods: 'Todos los métodos',
   },
 
   expenses: {

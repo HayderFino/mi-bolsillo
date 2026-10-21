@@ -1,4 +1,4 @@
-import type { Budget, Category, Expense } from '../types'
+import type { Budget, Category, Expense, Income } from '../types'
 
 export interface CategoryTotal {
   category: Category
@@ -147,6 +147,18 @@ export interface DailyEvolution {
 /** Returns the number of movements in a specific month */
 export function calculateMovementCount(expenses: Expense[], yearMonth: string): number {
   return filterExpensesByMonth(expenses, yearMonth).length
+}
+
+/** Sum of the incomes that fall in the given month (an empty list returns 0, never a fake value). */
+export function calculateTotalIncome(incomes: Income[], yearMonth: string): number {
+  return incomes
+    .filter((income) => income.date.startsWith(yearMonth))
+    .reduce((sum, income) => sum + income.amount, 0)
+}
+
+/** Income minus expenses for the month; negative means more spending than income. */
+export function calculateBalance(totalIncome: number, totalExpenses: number): number {
+  return totalIncome - totalExpenses
 }
 
 /** Returns data for category distribution (Pie Chart) */

@@ -4,6 +4,7 @@ import { beforeEach, expect, it, vi } from 'vitest'
 import { db } from '../../src/db/database'
 import { seedDefaultCategories } from '../../src/db/seed'
 import { SettingsPage } from '../../src/pages/Settings'
+import { AuthProvider } from '../../src/contexts/AuthContext'
 import { collectBackup, serializeBackup } from '../../src/services/backupService'
 import { MESSAGES } from '../../src/services/messages'
 import type { Notice } from '../../src/components/ui/NoticeHost'
@@ -34,13 +35,17 @@ beforeEach(async () => {
 })
 
 it('shows the local-account summary, backup warning and privacy notices', async () => {
-  render(<SettingsPage onNotify={onNotify} />)
+  render(
+    <AuthProvider>
+      <SettingsPage onNotify={onNotify} />
+    </AuthProvider>,
+  )
 
   expect(await screen.findByRole('heading', { name: 'Ajustes', level: 1 })).toBeInTheDocument()
-  expect(await screen.findByText('1 gasto · 8 categorías · 0 presupuestos')).toBeInTheDocument()
-  expect(screen.getByText(/IndexedDB no es una copia de seguridad/i)).toBeInTheDocument()
+  expect(await screen.findByText('1 gasto · 8 categorías · 0 presupuestos · 0 ingresos · 0 categorías de ingreso')).toBeInTheDocument()
+  expect(screen.getByText(/exportar un archivo json periódicamente/i)).toBeInTheDocument()
   expect(screen.getByText(/no está cifrado automáticamente/i)).toBeInTheDocument()
-  expect(screen.getByText(/no salen del navegador/i)).toBeInTheDocument()
+  expect(screen.getByText(/tus datos se almacenan localmente/i)).toBeInTheDocument()
 })
 
 it('exports a JSON file and reports success', async () => {
@@ -52,7 +57,11 @@ it('exports a JSON file and reports success', async () => {
   URL.revokeObjectURL = revokeObjectURL
   const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
 
-  render(<SettingsPage onNotify={onNotify} />)
+  render(
+    <AuthProvider>
+      <SettingsPage onNotify={onNotify} />
+    </AuthProvider>,
+  )
   await user.click(await screen.findByRole('button', { name: /exportar copia/i }))
 
   await waitFor(() => expect(createObjectURL).toHaveBeenCalledTimes(1))
@@ -71,7 +80,11 @@ it('exports a JSON file and reports success', async () => {
 
 it('rejects a malformed file and leaves the data untouched', async () => {
   const user = userEvent.setup()
-  render(<SettingsPage onNotify={onNotify} />)
+  render(
+    <AuthProvider>
+      <SettingsPage onNotify={onNotify} />
+    </AuthProvider>,
+  )
 
   const input = screen.getByLabelText(/elegir archivo/i)
   await user.upload(input, new File(['{esto no es json'], 'roto.json', { type: 'application/json' }))
@@ -84,7 +97,11 @@ it('rejects a malformed file and leaves the data untouched', async () => {
 
 it('rejects a JSON file with an incompatible format version', async () => {
   const user = userEvent.setup()
-  render(<SettingsPage onNotify={onNotify} />)
+  render(
+    <AuthProvider>
+      <SettingsPage onNotify={onNotify} />
+    </AuthProvider>,
+  )
 
   const incompatible = JSON.stringify({ app: 'mi-bolsillo', version: 99, exportedAt: 'x', data: { expenses: [], categories: [], budgets: [] } })
   await user.upload(screen.getByLabelText(/elegir archivo/i), new File([incompatible], 'futuro.json', { type: 'application/json' }))
@@ -95,7 +112,11 @@ it('rejects a JSON file with an incompatible format version', async () => {
 
 it('asks for confirmation before overwriting and keeps data when cancelled', async () => {
   const user = userEvent.setup()
-  render(<SettingsPage onNotify={onNotify} />)
+  render(
+    <AuthProvider>
+      <SettingsPage onNotify={onNotify} />
+    </AuthProvider>,
+  )
 
   const backup = await collectBackup()
   await user.upload(
@@ -115,7 +136,11 @@ it('asks for confirmation before overwriting and keeps data when cancelled', asy
 
 it('restores the backup on confirmation, replacing current data', async () => {
   const user = userEvent.setup()
-  render(<SettingsPage onNotify={onNotify} />)
+  render(
+    <AuthProvider>
+      <SettingsPage onNotify={onNotify} />
+    </AuthProvider>,
+  )
 
   const backup = await collectBackup()
 
@@ -147,6 +172,6 @@ it('restores the backup on confirmation, replacing current data', async () => {
   expect(onNotify).toHaveBeenCalledTimes(1)
   expect(notifyOfCall(0)).toMatchObject({
     kind: 'success',
-    message: 'Copia restaurada: 1 gasto, 8 categorías y 0 presupuestos.',
+    message: 'Copia restaurada: 1 gasto, 8 categorías, 0 presupuestos y 0 ingresos.',
   })
 })

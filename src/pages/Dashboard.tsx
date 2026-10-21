@@ -13,7 +13,9 @@ import {
   calculateBudgetSummary,
   calculateDistributionByCategory,
   calculateEvolutionByDay,
-  calculateCategoryComparison
+  calculateCategoryComparison,
+  calculateTotalIncome,
+  calculateBalance
 } from '../services/statisticsService'
 import { Plus } from 'lucide-react'
 import classes from './Dashboard.module.css'
@@ -41,9 +43,11 @@ export function DashboardPage({ onRegister }: DashboardProps) {
       .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt))
       .slice(0, 5)
 
+    const allIncomes = await db.incomes.where('date').between(from, to, true, true).toArray()
+
     const budgets = await db.budgets.where('yearMonth').equals(yearMonth).toArray()
 
-    return { allExpenses, recentExpenses, budgets }
+    return { allExpenses, allIncomes, recentExpenses, budgets }
   }, [from, to, yearMonth])
 
   if (!data || !categories) {
@@ -60,9 +64,11 @@ export function DashboardPage({ onRegister }: DashboardProps) {
     )
   }
 
-  const { allExpenses, recentExpenses, budgets } = data
+  const { allExpenses, allIncomes, recentExpenses, budgets } = data
 
   const totalSpent = calculateTotalExpenses(allExpenses, yearMonth)
+  const totalIncome = calculateTotalIncome(allIncomes, yearMonth)
+  const balance = calculateBalance(totalIncome, totalSpent)
   const movementCount = calculateMovementCount(allExpenses, yearMonth)
   const topCategories = calculateTopCategories(allExpenses, categories, yearMonth, 1)
   const topCategory = topCategories.length > 0 ? topCategories[0] : null
@@ -87,6 +93,20 @@ export function DashboardPage({ onRegister }: DashboardProps) {
         <div className={classes.kpiCard}>
           <span className={classes.kpiLabel}>Total Gastado</span>
           <span className={classes.kpiValue}>{formatCOP(totalSpent)}</span>
+        </div>
+        <div className={classes.kpiCard}>
+          <span className={classes.kpiLabel}>{es.dashboard.totalIncome}</span>
+          <span className={classes.kpiValue}>{formatCOP(totalIncome)}</span>
+          <a href="#ingresos" className={classes.viewAllLink}>
+            {es.incomes.pageTitle}
+          </a>
+        </div>
+        <div className={classes.kpiCard}>
+          <span className={classes.kpiLabel}>{es.dashboard.balance}</span>
+          <span className={classes.kpiValue}>{formatCOP(balance)}</span>
+          <span className={balance >= 0 ? classes.kpiPositive : classes.kpiNegative}>
+            {balance >= 0 ? es.dashboard.balancePositiveLabel : es.dashboard.balanceNegativeLabel}
+          </span>
         </div>
         <div className={classes.kpiCard}>
           <span className={classes.kpiLabel}>Movimientos</span>

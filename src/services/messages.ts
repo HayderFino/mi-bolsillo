@@ -29,4 +29,15 @@ export const MESSAGES = {
   backupBudgetInvalid: 'La copia de respaldo contiene presupuestos no válidos.',
   backupDuplicateId: 'La copia de respaldo contiene identificadores duplicados.',
   backupMissingCategory: 'La copia de respaldo hace referencia a una categoría que no incluye.',
+  incomeNotFound: 'El ingreso no existe.',
+  incomeCategoryNotFound: 'La categoría de ingreso no existe.',
+  incomeCategoryNameRequired: 'El nombre de la categoría no puede estar vacío.',
+  incomeCategoryNameTooLong: 'El nombre no puede tener más de 30 caracteres.',
+  incomeCategoryNameDuplicate: 'Ya existe una categoría de ingreso con ese nombre.',
+  incomeCategoryIconInvalid: 'El icono seleccionado no está permitido.',
+  incomeCategoryColorInvalid: 'El color seleccionado no está permitido.',
+  backupIncomeInvalid: 'La copia de respaldo contiene ingresos no válidos.',
+  backupIncomeCategoryInvalid: 'La copia de respaldo contiene categorías de ingreso no válidas.',
+  backupMissingIncomeCategory:
+    'La copia de respaldo hace referencia a una categoría de ingreso que no incluye.',
 } as const

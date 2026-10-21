@@ -24,16 +24,18 @@ Prioridades: **sencillez, privacidad, rapidez de registro y claridad de datos**.
 | Moneda | COP, importes como **enteros** (sin decimales) |
 | Registro | Manual |
 | Almacenamiento | Local en el navegador (IndexedDB vía Dexie) |
-| Movimientos | Solo gastos |
-| Categorías | 8 predeterminadas, editables, se pueden crear nuevas |
+| Movimientos | Gastos **e ingresos**, en tablas separadas (`expenses` / `incomes`) |
+| Categorías | 8 predeterminadas de gasto + 6 predeterminadas de ingreso, editables, se pueden crear nuevas |
 | Presupuestos | Independientes por categoría **y** por mes |
 | Alertas | Advertencia ≥ 80 %, excedido > 100 % |
 | Estilo | Bancario, sobrio, profesional |
 | Costos | Cero infraestructura obligatoria |
 
+> **Cambio de alcance (confirmado por el usuario):** los **ingresos** forman parte de la app (registro manual, listado propio, categorías propias de ingreso y KPIs de *Ingresado* y *Balance* en el Panel). Están en una tabla separada de los gastos, **no** se mezclan con el presupuesto de gasto y **no se sincronizan con Firebase** (pendiente; ver §15). El resto de exclusiones de abajo siguen vigentes.
+
 ### Fuera de alcance del MVP (NO implementar)
 
-Ingresos, conexiones bancarias, sincronización en la nube, backend, autenticación, IA, servicios de pago, multimoneda.
+Conexiones bancarias, IA, servicios de pago, multimoneda, cifrado del almacenamiento local.
 
 ## 3. Stack obligatorio
 
@@ -84,7 +86,7 @@ mi-bolsillo/
 │   ├── components/{layout,expenses,budgets,charts}/
 │   ├── pages/        Dashboard, Expenses, Budgets, Categories, Settings
 │   ├── db/           database.ts, seed.ts
-│   ├── services/     expenseService, budgetService, categoryService, statisticsService, backupService
+│   ├── services/     expenseService, incomeService, budgetService, categoryService, incomeCategoryService, statisticsService, backupService
 │   ├── utils/        currency.ts, dates.ts
 │   ├── types/        index.ts
 │   ├── styles/
@@ -102,7 +104,7 @@ Separación de capas (estricta):
 
 ### Navegación
 
-1. Panel principal · 2. Gastos · 3. Presupuestos · 4. Categorías · 5. Configuración y copias de seguridad
+1. Panel principal · 2. Gastos · 3. Ingresos · 4. Presupuestos · 5. Categorías · 6. Configuración y copias de seguridad
 
 ## 6. Modelo de datos
 
@@ -110,6 +112,8 @@ Separación de capas (estricta):
 Expense  { id, amount, description, date, categoryId, paymentMethod, createdAt, updatedAt }
 Category { id, name, icon, color, active }
 Budget   { id, categoryId, yearMonth, limitAmount }
+IncomeCategory { id, name, icon, color, active }
+Income   { id, amount, description, date, incomeCategoryId, paymentMethod, createdAt, updatedAt }
 ```
 
 Convenciones:
@@ -145,6 +149,16 @@ Convenciones:
 - Crear, renombrar, cambiar icono/color, activar/desactivar.
 - Desactivar **no** borra gastos históricos. Una categoría con gastos **no se elimina** (solo se desactiva).
 
+### Ingresos
+
+- Mismas reglas de validación que los gastos (importe entero > 0, descripción no vacía, fecha válida, método de pago permitido, fecha pasada permitida).
+- Categoría de ingreso existente y **activa** al crear; al editar se permite una categoría desactivada.
+- Tabla `incomes` separada; **no** afecta a presupuestos ni a las estadísticas de gasto.
+- Categorías de ingreso predeterminadas: Salario, Freelance, Negocio propio, Regalo, Reembolso, Otros.
+- Al editar se conserva `createdAt` y se refresca `updatedAt`.
+- `deleteIncome` requiere confirmación en la UI.
+- **No se sincronizan con Firebase** (pendiente): `syncService` solo refleja gastos y categorías de gasto.
+
 ### Presupuestos
 
 - Límite mensual por categoría; se crea, modifica y consulta.
@@ -158,6 +172,7 @@ Convenciones:
 ### Dashboard y gráficas
 
 - Total del mes, nº de movimientos, categoría con mayor gasto, resumen de presupuesto, distribución por categoría, evolución temporal, últimos movimientos, acceso rápido a "Registrar gasto".
+- KPIs adicionales de ingresos del mes: **Ingresado** y **Balance** (ingresos − gastos). El balance nunca altera presupuestos.
 - Selector de mes compartido por Panel y Presupuestos.
 - Gráficas e indicadores usan **los mismos filtros y periodo** (misma función de consulta).
 - **Todas las gráficas se hacen con Recharts.** No usar CSS/SVG manual ni otras bibliotecas.
@@ -268,7 +283,8 @@ Cobertura mínima requerida:
 5. **Dashboard**: indicadores (total, nº de movimientos, categoría top, presupuesto usado), gráficas con Recharts, últimos movimientos, acceso rápido a registrar gasto, selector de mes, consistencia de datos.
 6. **Categorías (RF-03)**: pantalla de gestión (crear, renombrar, icono y color, activar/desactivar, consultar el historial de gastos de cada categoría). Reutiliza `categoryService`; no se elimina una categoría con gastos. No incluye "preferencias" ni ajustes que no estén en los requisitos.
 7. **Respaldo y calidad**: pantalla de Configuración con export/import JSON (RF-07), pruebas de casos límite, persistencia al recargar, accesibilidad.
-8. **Entrega**: build de producción, PWA (`vite-plugin-pwa`, con confirmación previa), documentación de instalación, uso y limitaciones.
+8. **Ingresos** (ampliación de alcance confirmada): tipos, tablas `incomes`/`incomeCategories` (Dexie v2), servicios, seed de categorías de ingreso, pantalla CRUD con filtros, KPIs de *Ingresado*/*Balance* en el Panel y backup v2 (compatible con v1). No se sincroniza con Firebase.
+9. **Entrega**: build de producción, PWA (`vite-plugin-pwa`, con confirmación previa), documentación de instalación, uso y limitaciones.
 
 No pasar a la siguiente fase sin cerrar la anterior.
 

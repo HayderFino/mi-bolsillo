@@ -36,16 +36,28 @@ describe('persistence across connections', () => {
     expect(await listCategories()).toHaveLength(8)
   })
 
-  it('stores the expected schema as version 1', async () => {
+  it('stores the expected schema as version 2', async () => {
     const raw = new Dexie(DB_NAME)
     await raw.open()
     try {
-      expect(raw.verno).toBe(1)
-      expect(raw.tables.map((t) => t.name).sort()).toEqual(['budgets', 'categories', 'expenses', 'meta'])
+      expect(raw.verno).toBe(2)
+      expect(raw.tables.map((t) => t.name).sort()).toEqual([
+        'budgets',
+        'categories',
+        'expenses',
+        'incomeCategories',
+        'incomes',
+        'meta',
+      ])
       expect(raw.table('expenses').schema.indexes.map((i) => i.name).sort()).toEqual([
         '[categoryId+date]',
         'categoryId',
         'date',
+        'paymentMethod',
+      ])
+      expect(raw.table('incomes').schema.indexes.map((i) => i.name).sort()).toEqual([
+        'date',
+        'incomeCategoryId',
         'paymentMethod',
       ])
     } finally {
