@@ -10,15 +10,17 @@ import {
 } from 'firebase/firestore'
 import { firestore, auth } from './firebase'
 import { db } from '../db/database'
+import { seedDefaultCategories } from '../db/seed'
 import type { Expense, Category, Budget } from '../types'
 
 let activeListeners: Unsubscribe[] = []
 
 /**
  * Initializes two-way synchronization between Firestore and local Dexie for the given user.
- * 1. Checks if remote has data; if empty and local has data, pushes local data to cloud.
- * 2. If remote has data, updates local Dexie.
- * 3. Sets up real-time onSnapshot listeners for cross-tab / cross-device synchronization.
+ * 1. If remote is empty and local is also empty, runs the seed so categories exist locally.
+ * 2. If remote is empty and local has data, pushes local data to cloud.
+ * 3. If remote has data, updates local Dexie.
+ * 4. Sets up real-time onSnapshot listeners for cross-tab / cross-device synchronization.
  */
 export async function initUserSync(uid: string): Promise<() => void> {
   stopUserSync()
@@ -38,7 +40,9 @@ export async function initUserSync(uid: string): Promise<() => void> {
       remoteCategoriesSnap.empty && remoteBudgetsSnap.empty && remoteExpensesSnap.empty
 
     if (isRemoteEmpty) {
-      // First cloud login: push local Dexie database to Firestore
+      // First cloud login: ensure categories exist locally (seed if needed), then push to cloud
+      await seedDefaultCategories()
+
       const localCategories = await db.categories.toArray()
       const localBudgets = await db.budgets.toArray()
       const localExpenses = await db.expenses.toArray()
