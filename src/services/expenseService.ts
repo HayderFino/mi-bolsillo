@@ -22,16 +22,21 @@ export interface ExpenseFilter {
   search?: string
 }
 
+import { syncExpenseToCloud, deleteExpenseFromCloud } from './syncService'
+
 export async function createExpense(input: NewExpense): Promise<Expense> {
   const data = validateFields(input)
 
-  return db.transaction('rw', db.expenses, db.categories, async () => {
+  const created = await db.transaction('rw', db.expenses, db.categories, async () => {
     await requireCategory(data.categoryId, true)
     const now = nowISO()
     const record = { ...data, createdAt: now, updatedAt: now }
     const id = await db.expenses.add(record)
     return { ...record, id }
   })
+
+  void syncExpenseToCloud(created)
+  return created
 }
 
 export async function getExpense(id: number): Promise<Expense> {
@@ -45,7 +50,7 @@ export async function getExpense(id: number): Promise<Expense> {
  * changes, so expenses of a deactivated category remain editable.
  */
 export async function updateExpense(id: number, changes: Partial<NewExpense>): Promise<Expense> {
-  return db.transaction('rw', db.expenses, db.categories, async () => {
+  const updated = await db.transaction('rw', db.expenses, db.categories, async () => {
     const existing = await getExpense(id)
     const data = validateFields({
       amount: changes.amount ?? existing.amount,
@@ -56,10 +61,13 @@ export async function updateExpense(id: number, changes: Partial<NewExpense>): P
     })
     await requireCategory(data.categoryId, data.categoryId !== existing.categoryId)
 
-    const updated: Expense = { ...existing, ...data, updatedAt: nowISO() }
-    await db.expenses.put(updated)
-    return updated
+    const result: Expense = { ...existing, ...data, updatedAt: nowISO() }
+    await db.expenses.put(result)
+    return result
   })
+
+  void syncExpenseToCloud(updated)
+  return updated
 }
 
 /** Deletes an expense. Asking the user for confirmation is the UI's responsibility. */
@@ -68,6 +76,7 @@ export async function deleteExpense(id: number): Promise<void> {
     await getExpense(id)
     await db.expenses.delete(id)
   })
+  void deleteExpenseFromCloud(id)
 }
 
 /** Lists expenses ordered by date descending (ties: newest id first). */

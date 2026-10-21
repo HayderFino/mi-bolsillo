@@ -21,4 +21,12 @@ export const MESSAGES = {
     'No se puede eliminar una categoría que tiene gastos. Desactívala en su lugar.',
   budgetLimitInvalid: 'El límite debe ser un número entero mayor que 0.',
   budgetNotFound: 'El presupuesto no existe.',
+  backupInvalidJson: 'El archivo no es un JSON válido.',
+  backupInvalidStructure: 'El archivo no tiene la estructura de una copia de respaldo válida.',
+  backupVersionIncompatible: 'La versión de esta copia de respaldo no es compatible con la aplicación.',
+  backupCategoryInvalid: 'La copia de respaldo contiene categorías no válidas.',
+  backupExpenseInvalid: 'La copia de respaldo contiene gastos no válidos.',
+  backupBudgetInvalid: 'La copia de respaldo contiene presupuestos no válidos.',
+  backupDuplicateId: 'La copia de respaldo contiene identificadores duplicados.',
+  backupMissingCategory: 'La copia de respaldo hace referencia a una categoría que no incluye.',
 } as const

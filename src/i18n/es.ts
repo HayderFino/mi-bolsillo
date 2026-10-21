@@ -32,9 +32,47 @@ export const es = {
     registerExpense: 'Registrar gasto',
   },
 
-  comingSoon: {
-    title: 'Próximamente',
-    text: 'Esta sección todavía no está disponible.',
+  settings: {
+    pageTitle: 'Ajustes',
+    account: {
+      title: 'Cuenta y datos',
+      description:
+        'No hay cuentas ni servidores: todo se guarda solo en este navegador con el que estás usando ahora.',
+      stats: (expenses: number, categories: number, budgets: number) =>
+        `${expenses} ${expenses === 1 ? 'gasto' : 'gastos'} · ${categories} ${
+          categories === 1 ? 'categoría' : 'categorías'
+        } · ${budgets} ${budgets === 1 ? 'presupuesto' : 'presupuestos'}`,
+      statsLabel: 'Datos guardados en este navegador',
+    },
+    backup: {
+      title: 'Copia de seguridad',
+      warning:
+        'IndexedDB no es una copia de seguridad: si borras los datos del navegador o cambias de dispositivo, puedes perder todo. Exporta un archivo JSON periódicamente.',
+      exportTitle: 'Exportar',
+      exportDescription: 'Descarga un archivo JSON con tus gastos, categorías y presupuestos.',
+      exportButton: 'Exportar copia (JSON)',
+      exporting: 'Exportando…',
+      exportSuccess: 'Copia de seguridad exportada.',
+      importTitle: 'Importar',
+      importDescription:
+        'Restaura una copia exportada antes. Los datos actuales se reemplazarán por los del archivo.',
+      importButton: 'Elegir archivo…',
+      importHint: 'Archivo JSON exportado desde esta aplicación.',
+      importSuccess: (expenses: number, categories: number, budgets: number) =>
+        `Copia restaurada: ${expenses} ${expenses === 1 ? 'gasto' : 'gastos'}, ${categories} ${
+          categories === 1 ? 'categoría' : 'categorías'
+        } y ${budgets} ${budgets === 1 ? 'presupuesto' : 'presupuestos'}.`,
+      confirmTitle: '¿Reemplazar todos los datos?',
+      confirmText: (fileName: string) =>
+        `Se eliminarán los datos actuales de este navegador y se cargarán los del archivo «${fileName}». Esta acción no se puede deshacer.`,
+      confirmButton: 'Restaurar copia',
+    },
+    privacy: {
+      title: 'Privacidad y almacenamiento',
+      local: 'Tus datos no salen del navegador: no hay analítica ni peticiones externas con tu información.',
+      encryption:
+        'El almacenamiento local no está cifrado automáticamente; cualquier persona con acceso a tu perfil del navegador podría leerlo.',
+    },
   },
 
   notice: {

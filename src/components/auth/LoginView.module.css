@@ -1,0 +1,133 @@
+.container {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #0d2847 0%, #12355b 50%, #1a497b 100%);
+  padding: 1.5rem;
+  box-sizing: border-box;
+}
+
+.card {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 2.5rem 2rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25), 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.brandIcon {
+  width: 64px;
+  height: 64px;
+  background: #ebf3fa;
+  color: #12355b;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+
+.title {
+  font-size: 1.625rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.02em;
+}
+
+.tagline {
+  font-size: 0.9375rem;
+  color: #64748b;
+  margin: 0 0 2rem;
+  line-height: 1.5;
+}
+
+.googleBtn {
+  width: 100%;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background: #ffffff;
+  color: #1e293b;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  padding: 0.75rem 1rem;
+}
+
+.googleBtn:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.googleBtn:focus-visible {
+  outline: 2px solid #12355b;
+  outline-offset: 2px;
+}
+
+.googleBtn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.googleIcon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.errorBanner {
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  text-align: left;
+}
+
+.featureList {
+  width: 100%;
+  margin-top: 2rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  text-align: left;
+}
+
+.featureItem {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: 0.8125rem;
+  color: #475569;
+}
+
+.featureIcon {
+  color: #2F7D5B;
+  flex-shrink: 0;
+}
+
+.footerNote {
+  margin-top: 1.5rem;
+  font-size: 0.75rem;
+  color: #94a3b8;
+}

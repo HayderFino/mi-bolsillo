@@ -60,30 +60,35 @@ export async function getCategoryExpenseCount(id: number): Promise<number> {
   return db.expenses.where('categoryId').equals(id).count()
 }
 
+import { syncCategoryToCloud, deleteCategoryFromCloud } from './syncService'
+
 export async function createCategory(input: NewCategory): Promise<Category> {
   const name = validateCategoryName(input.name)
   const icon = validateIcon(input.icon)
   const color = validateColor(input.color)
 
-  return db.transaction('rw', db.categories, async () => {
+  const created = await db.transaction('rw', db.categories, async () => {
     await assertNameAvailable(name)
     const record = { name, icon, color, active: true }
     const id = await db.categories.add(record)
     return { ...record, id }
   })
+
+  void syncCategoryToCloud(created)
+  return created
 }
 
 export async function updateCategory(id: number, changes: CategoryChanges): Promise<Category> {
-  return db.transaction('rw', db.categories, async () => {
+  const updated = await db.transaction('rw', db.categories, async () => {
     const existing = await getCategory(id)
-    const updated: Category = { ...existing }
+    const result: Category = { ...existing }
 
     if (changes.name !== undefined) {
-      updated.name = validateCategoryName(changes.name)
-      await assertNameAvailable(updated.name, id)
+      result.name = validateCategoryName(changes.name)
+      await assertNameAvailable(result.name, id)
     }
-    if (changes.icon !== undefined && changes.icon !== existing.icon) updated.icon = validateIcon(changes.icon)
-    if (changes.color !== undefined && changes.color !== existing.color) updated.color = validateColor(changes.color)
+    if (changes.icon !== undefined && changes.icon !== existing.icon) result.icon = validateIcon(changes.icon)
+    if (changes.color !== undefined && changes.color !== existing.color) result.color = validateColor(changes.color)
     
     if (changes.active !== undefined) {
       if (typeof changes.active !== 'boolean') {
@@ -98,12 +103,15 @@ export async function updateCategory(id: number, changes: CategoryChanges): Prom
         }
       }
       
-      updated.active = changes.active
+      result.active = changes.active
     }
 
-    await db.categories.put(updated)
-    return updated
+    await db.categories.put(result)
+    return result
   })
+
+  void syncCategoryToCloud(updated)
+  return updated
 }
 
 /**
@@ -126,6 +134,7 @@ export async function deleteCategory(id: number): Promise<void> {
     await db.budgets.where('categoryId').equals(id).delete()
     await db.categories.delete(id)
   })
+  void deleteCategoryFromCloud(id)
 }
 
 

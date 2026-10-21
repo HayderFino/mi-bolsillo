@@ -79,3 +79,17 @@ it('integration in jsdom: Ver historial in Categories navigates to Expenses with
   const badgeBtn = await screen.findByRole('button', { name: /Filtrando por Comida ✕/i })
   expect(badgeBtn).toBeInTheDocument()
 })
+
+it('integration in jsdom: Settings route shows the backup panel', async () => {
+  const user = userEvent.setup()
+  window.location.hash = '#/panel'
+  window.dispatchEvent(new Event('hashchange'))
+  render(<App />)
+
+  const nav = await screen.findByRole('navigation', { name: /navegación principal/i })
+  await user.click(within(nav).getByRole('link', { name: /ajustes/i }))
+
+  expect(await screen.findByRole('heading', { name: 'Ajustes', level: 1 })).toBeInTheDocument()
+  expect(await screen.findByRole('button', { name: /exportar copia/i })).toBeInTheDocument()
+  expect(screen.getByText(/IndexedDB no es una copia de seguridad/i)).toBeInTheDocument()
+})

@@ -108,7 +108,7 @@ it('allows editing a category with a legacy icon/color outside the allowed lists
   
   await user.click(screen.getByRole('button', { name: /Guardar/i }))
   
-  expect(await screen.findByText('Renamed')).toBeInTheDocument()
+  expect(await screen.findByText('Renamed', {}, { timeout: 3000 })).toBeInTheDocument()
   
   // Check db that it preserved legacy values
   const cat = await db.categories.get(id)

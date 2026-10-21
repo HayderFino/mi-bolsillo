@@ -1,6 +1,7 @@
 import { useRef, type ReactNode } from 'react'
 import {
   LayoutDashboard,
+  LogOut,
   PiggyBank,
   Plus,
   Receipt,
@@ -8,6 +9,7 @@ import {
   Tags,
   type LucideIcon,
 } from 'lucide-react'
+import { useAuth } from '../../hooks/useAuth'
 import { hrefFor, type Route } from '../../hooks/useHashRoute'
 import { es } from '../../i18n/es'
 import { NoticeHost, type Notice } from '../ui/NoticeHost'
@@ -32,6 +34,7 @@ interface AppShellProps {
 /** Mobile: top bar + bottom navigation. Wide screens: sidebar. The "+" button is always available. */
 export function AppShell({ route, onRegisterExpense, notice, onDismissNotice, children }: AppShellProps) {
   const mainRef = useRef<HTMLElement>(null)
+  const { user, logout } = useAuth()
 
   return (
     <div className={styles.shell}>
@@ -41,6 +44,29 @@ export function AppShell({ route, onRegisterExpense, notice, onDismissNotice, ch
 
       <header className={styles.brandBar}>
         <span className={styles.brand}>{es.appName}</span>
+        {user && (
+          <div className={styles.userSection}>
+            {user.photoURL ? (
+              <img src={user.photoURL} alt="" className={styles.userAvatar} />
+            ) : (
+              <span className={styles.userInitials} aria-hidden="true">
+                {(user.displayName || user.email || 'U')[0].toUpperCase()}
+              </span>
+            )}
+            <span className={styles.userName} title={user.email ?? ''}>
+              {user.displayName || user.email}
+            </span>
+            <button
+              type="button"
+              className={styles.logoutBtn}
+              onClick={() => void logout()}
+              title="Cerrar sesión"
+              aria-label="Cerrar sesión"
+            >
+              <LogOut size={18} aria-hidden="true" />
+            </button>
+          </div>
+        )}
       </header>
 
       <nav className={styles.nav} aria-label={es.nav.ariaLabel}>

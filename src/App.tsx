@@ -1,4 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
+import { AuthProvider } from './contexts/AuthContext'
+import { AuthGate } from './components/auth/AuthGate'
 import { AppShell } from './components/layout/AppShell'
 import { DatabaseGate } from './components/layout/DatabaseGate'
 import { ExpenseFormDialog } from './components/expenses/ExpenseFormDialog'
@@ -7,9 +9,9 @@ import { useHashRoute } from './hooks/useHashRoute'
 import { es } from './i18n/es'
 import { BudgetsPage } from './pages/Budgets'
 import { CategoriesPage } from './pages/Categories'
-import { ComingSoonPage } from './pages/ComingSoon'
 import { DashboardPage } from './pages/Dashboard'
 import { ExpensesPage } from './pages/Expenses'
+import { SettingsPage } from './pages/Settings'
 import type { Expense } from './types'
 
 /** `null` = closed; `{}` = registering a new expense; `{ expense }` = editing it. */
@@ -33,43 +35,47 @@ function App() {
   }
 
   return (
-    <DatabaseGate>
-      <AppShell
-        route={route}
-        onRegisterExpense={() => setExpenseDialog({})}
-        notice={notice}
-        onDismissNotice={() => setNotice(null)}
-      >
-        {route === 'gastos' && (
-          <ExpensesPage
-            onRegister={() => setExpenseDialog({})}
-            onEdit={(expense) => setExpenseDialog({ expense })}
-            onNotify={notify}
-            initialCategoryId={historyCategory}
-          />
-        )}
-        {route === 'panel' && <DashboardPage onRegister={() => setExpenseDialog({})} />}
-        {route === 'presupuestos' && <BudgetsPage />}
-        {route === 'categorias' && (
-          <CategoriesPage
-            onNotify={(message, type) => notify({ kind: type, message })}
-            onNavigateToHistory={(categoryId) => {
-              setHistoryCategory(categoryId)
-              window.location.hash = '#gastos'
-            }}
-          />
-        )}
-        {route === 'ajustes' && <ComingSoonPage title={es.nav.settings} />}
-      </AppShell>
+    <AuthProvider>
+      <AuthGate>
+        <DatabaseGate>
+          <AppShell
+            route={route}
+            onRegisterExpense={() => setExpenseDialog({})}
+            notice={notice}
+            onDismissNotice={() => setNotice(null)}
+          >
+            {route === 'gastos' && (
+              <ExpensesPage
+                onRegister={() => setExpenseDialog({})}
+                onEdit={(expense) => setExpenseDialog({ expense })}
+                onNotify={notify}
+                initialCategoryId={historyCategory}
+              />
+            )}
+            {route === 'panel' && <DashboardPage onRegister={() => setExpenseDialog({})} />}
+            {route === 'presupuestos' && <BudgetsPage />}
+            {route === 'categorias' && (
+              <CategoriesPage
+                onNotify={(message, type) => notify({ kind: type, message })}
+                onNavigateToHistory={(categoryId) => {
+                  setHistoryCategory(categoryId)
+                  window.location.hash = '#gastos'
+                }}
+              />
+            )}
+            {route === 'ajustes' && <SettingsPage onNotify={notify} />}
+          </AppShell>
 
-      {expenseDialog && (
-        <ExpenseFormDialog
-          expense={expenseDialog.expense}
-          onClose={() => setExpenseDialog(null)}
-          onSaved={handleSaved}
-        />
-      )}
-    </DatabaseGate>
+          {expenseDialog && (
+            <ExpenseFormDialog
+              expense={expenseDialog.expense}
+              onClose={() => setExpenseDialog(null)}
+              onSaved={handleSaved}
+            />
+          )}
+        </DatabaseGate>
+      </AuthGate>
+    </AuthProvider>
   )
 }
 

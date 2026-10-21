@@ -12,6 +12,8 @@ export interface BudgetInput {
 }
 
 /** Deterministic budget id: one budget per category and month. */
+import { syncBudgetToCloud, deleteBudgetFromCloud } from './syncService'
+
 export function buildBudgetId(categoryId: number, yearMonth: string): string {
   return `${categoryId}_${yearMonth}`
 }
@@ -21,15 +23,18 @@ export async function setBudget(input: BudgetInput): Promise<Budget> {
   assertYearMonth(input.yearMonth)
   assertPositiveInteger(input.limitAmount, MESSAGES.budgetLimitInvalid)
 
-  return db.transaction('rw', db.budgets, db.categories, async () => {
+  const budget = await db.transaction('rw', db.budgets, db.categories, async () => {
     const { categoryId, yearMonth, limitAmount } = input
     if (!isEntityId(categoryId) || !(await db.categories.get(categoryId))) {
       throw new ServiceError('validation', MESSAGES.categoryNotFound)
     }
-    const budget: Budget = { id: buildBudgetId(categoryId, yearMonth), categoryId, yearMonth, limitAmount }
-    await db.budgets.put(budget)
-    return budget
+    const result: Budget = { id: buildBudgetId(categoryId, yearMonth), categoryId, yearMonth, limitAmount }
+    await db.budgets.put(result)
+    return result
   })
+
+  void syncBudgetToCloud(budget)
+  return budget
 }
 
 /** Returns the budget, or `undefined` when none is defined (never invents a limit). */
@@ -52,4 +57,5 @@ export async function deleteBudget(categoryId: number, yearMonth: string): Promi
     if (!(await db.budgets.get(id))) throw new ServiceError('not_found', MESSAGES.budgetNotFound)
     await db.budgets.delete(id)
   })
+  void deleteBudgetFromCloud(id)
 }
