@@ -24,10 +24,14 @@ interface ExpensesPageProps {
   onRegister: () => void
   onEdit: (expense: Expense) => void
   onNotify: (notice: Omit<Notice, 'id'>) => void
+  initialCategoryId?: number | null
 }
 
-export function ExpensesPage({ onRegister, onEdit, onNotify }: ExpensesPageProps) {
-  const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS)
+export function ExpensesPage({ onRegister, onEdit, onNotify, initialCategoryId }: ExpensesPageProps) {
+  const [filters, setFilters] = useState<FilterState>({
+    ...DEFAULT_FILTERS,
+    categoryId: initialCategoryId ? String(initialCategoryId) : ''
+  })
   const [pendingDelete, setPendingDelete] = useState<Expense | null>(null)
   const [deleting, setDeleting] = useState(false)
 
@@ -69,6 +73,17 @@ export function ExpensesPage({ onRegister, onEdit, onNotify }: ExpensesPageProps
       </header>
 
       <ExpenseFilters state={filters} onChange={setFilters} categories={categories ?? []} />
+
+      {filters.categoryId && categories && (
+        <div className="mb-4">
+          <button 
+            onClick={() => setFilters(prev => ({ ...prev, categoryId: '' }))}
+            className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium hover:bg-blue-200 transition-colors"
+          >
+            Filtrando por {categories.find(c => c.id === Number(filters.categoryId))?.name || 'Categoría'} ✕
+          </button>
+        </div>
+      )}
 
       {error && (
         <p className={styles.error} role="alert">

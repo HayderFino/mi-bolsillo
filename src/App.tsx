@@ -6,6 +6,7 @@ import type { Notice } from './components/ui/NoticeHost'
 import { useHashRoute } from './hooks/useHashRoute'
 import { es } from './i18n/es'
 import { BudgetsPage } from './pages/Budgets'
+import { CategoriesPage } from './pages/Categories'
 import { ComingSoonPage } from './pages/ComingSoon'
 import { DashboardPage } from './pages/Dashboard'
 import { ExpensesPage } from './pages/Expenses'
@@ -18,6 +19,7 @@ function App() {
   const route = useHashRoute()
   const [expenseDialog, setExpenseDialog] = useState<ExpenseDialogState>(null)
   const [notice, setNotice] = useState<Notice | null>(null)
+  const [historyCategory, setHistoryCategory] = useState<number | null>(null)
   const nextNoticeId = useRef(0)
 
   const notify = useCallback((next: Omit<Notice, 'id'>) => {
@@ -43,11 +45,20 @@ function App() {
             onRegister={() => setExpenseDialog({})}
             onEdit={(expense) => setExpenseDialog({ expense })}
             onNotify={notify}
+            initialCategoryId={historyCategory}
           />
         )}
-        {route === 'panel' && <DashboardPage />}
+        {route === 'panel' && <DashboardPage onRegister={() => setExpenseDialog({})} />}
         {route === 'presupuestos' && <BudgetsPage />}
-        {route === 'categorias' && <ComingSoonPage title={es.nav.categories} />}
+        {route === 'categorias' && (
+          <CategoriesPage
+            onNotify={(message, type) => notify({ kind: type, message })}
+            onNavigateToHistory={(categoryId) => {
+              setHistoryCategory(categoryId)
+              window.location.hash = '#gastos'
+            }}
+          />
+        )}
         {route === 'ajustes' && <ComingSoonPage title={es.nav.settings} />}
       </AppShell>
 

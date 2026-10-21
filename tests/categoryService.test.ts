@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { setBudget, getBudget } from '../src/services/budgetService'
+import { db } from '../src/db/database'
 import {
   createCategory,
   deleteCategory,
@@ -7,11 +8,12 @@ import {
   getCategory,
   listCategories,
   updateCategory,
+  getCategoryExpenseCount
 } from '../src/services/categoryService'
 import { createExpense, getExpense, updateExpense } from '../src/services/expenseService'
 import { expectServiceError, validExpense } from './helpers'
 
-const newCategory = { name: 'Mascotas', icon: 'paw-print', color: '#336699' }
+const newCategory = { name: 'Mascotas', icon: 'dog', color: '#B4493F' }
 
 beforeEach(async () => {
   await ensureDefaultCategories()
@@ -35,9 +37,18 @@ describe('createCategory', () => {
     await expectServiceError(createCategory({ ...newCategory, name }), 'validation')
   })
 
-  it('rejects duplicate names ignoring case and accents-insensitive casing', async () => {
-    await expectServiceError(createCategory({ ...newCategory, name: 'salud' }), 'validation')
-    await expectServiceError(createCategory({ ...newCategory, name: 'ALIMENTACIÓN' }), 'validation')
+  it('rejects duplicate names ignoring case and accents', async () => {
+    // Duplicate of seeded categories
+    await expectServiceError(createCategory({ ...newCategory, name: 'salud' }), 'conflict')
+    await expectServiceError(createCategory({ ...newCategory, name: 'ALIMENTACION' }), 'conflict') // "Alimentación" without accent
+    await expectServiceError(createCategory({ ...newCategory, name: 'Educacion' }), 'conflict') // "Educación" without accent
+
+    // Custom created category
+    await createCategory({ name: 'Única', icon: 'car', color: '#B4493F' })
+    await expectServiceError(createCategory({ name: ' unIcA ', icon: 'home', color: '#B4493F' }), 'conflict')
+    
+    const [first] = await listCategories() // Alimentación
+    await expectServiceError(updateCategory(first.id, { name: 'unica' }), 'conflict')
   })
 
   it('rejects an empty icon and invalid colors', async () => {
@@ -51,9 +62,9 @@ describe('createCategory', () => {
 describe('updateCategory', () => {
   it('renames and changes icon and color', async () => {
     const created = await createCategory(newCategory)
-    const updated = await updateCategory(created.id, { name: 'Animales', icon: 'dog', color: '#112233' })
+    const updated = await updateCategory(created.id, { name: 'Animales', icon: 'car', color: '#C27C2C' })
 
-    expect(updated).toEqual({ id: created.id, name: 'Animales', icon: 'dog', color: '#112233', active: true })
+    expect(updated).toEqual({ id: created.id, name: 'Animales', icon: 'car', color: '#C27C2C', active: true })
     expect(await getCategory(created.id)).toEqual(updated)
   })
 
@@ -64,7 +75,7 @@ describe('updateCategory', () => {
 
   it('rejects renaming to another category name', async () => {
     const created = await createCategory(newCategory)
-    await expectServiceError(updateCategory(created.id, { name: 'Salud' }), 'validation')
+    await expectServiceError(updateCategory(created.id, { name: 'Salud' }), 'conflict')
     expect((await getCategory(created.id)).name).toBe('Mascotas')
   })
 
@@ -152,5 +163,67 @@ describe('deleteCategory', () => {
 
   it('fails with not_found for an unknown id', async () => {
     await expectServiceError(deleteCategory(9999), 'not_found')
+  })
+})
+
+describe('category validation', () => {
+  it('rejects category name longer than 30 characters', async () => {
+    const longName = 'a'.repeat(31)
+    await expectServiceError(createCategory({ name: longName, icon: 'car', color: '#EF4444' }), 'validation')
+  })
+
+  it('rejects invalid icons and colors', async () => {
+    await expectServiceError(createCategory({ name: 'TestIcon', icon: 'invalid-icon', color: '#EF4444' }), 'validation')
+    await expectServiceError(createCategory({ name: 'TestColor', icon: 'car', color: '#000000' }), 'validation')
+  })
+
+  it('prevents deactivating the last active category', async () => {
+    const cats = await listCategories()
+    for (let i = 1; i < cats.length; i++) {
+      await updateCategory(cats[i].id, { active: false })
+    }
+    
+    // Attempt to deactivate the last one (cats[0])
+    await expectServiceError(updateCategory(cats[0].id, { active: false }), 'validation')
+  })
+
+  it('prevents deleting the last active category', async () => {
+    const cats = await listCategories()
+    for (let i = 1; i < cats.length; i++) {
+      await updateCategory(cats[i].id, { active: false })
+    }
+    
+    // Attempt to delete the last one
+    await expectServiceError(deleteCategory(cats[0].id), 'validation')
+  })
+
+  it('allows renaming a category with a legacy invalid icon/color', async () => {
+    // Manually insert a legacy category bypassing the service
+    const id = await db.categories.add({
+      name: 'Legacy',
+      icon: 'invalid-icon',
+      color: '#000000',
+      active: true
+    })
+    
+    // Changing name should work and preserve the legacy icon/color, even if sent back entirely
+    const updated = await updateCategory(id, { name: 'Renamed Legacy', icon: 'invalid-icon', color: '#000000' })
+    expect(updated.name).toBe('Renamed Legacy')
+    expect(updated.icon).toBe('invalid-icon')
+    expect(updated.color).toBe('#000000')
+    
+    // But changing it to another invalid color should fail
+    await expectServiceError(updateCategory(id, { color: '#111111' }), 'validation')
+  })
+})
+
+describe('getCategoryExpenseCount', () => {
+  it('returns the number of expenses for a category', async () => {
+    const [first] = await listCategories()
+    await createExpense(validExpense(first.id))
+    await createExpense(validExpense(first.id))
+
+    const count = await getCategoryExpenseCount(first.id)
+    expect(count).toBe(2)
   })
 })

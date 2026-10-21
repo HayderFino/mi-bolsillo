@@ -43,7 +43,7 @@ Ingresos, conexiones bancarias, sincronización en la nube, backend, autenticaci
 - **Lucide React** (iconos)
 - CSS Modules (o equivalente consistente)
 - Pruebas: Vitest + Testing Library + `@testing-library/user-event` + `jsdom` (componentes) + `fake-indexeddb` (persistencia)
-- PWA: `vite-plugin-pwa` **solo en la Fase 7** y con confirmación previa
+- PWA: `vite-plugin-pwa` **solo en la Fase 8** y con confirmación previa
 
 Reglas sobre dependencias:
 
@@ -223,6 +223,7 @@ Cobertura mínima requerida:
 - Asignación de gastos al mes correcto (límites de mes, fin de año).
 - Exportación/importación (archivo válido, malformado, versión incompatible, rechazo de sobrescritura).
 - Integridad: no eliminar categorías con gastos.
+- Limitación conocida: jsdom no calcula tamaños de layout, así que `ResponsiveContainer`/Recharts **no se verifican en pruebas**. Las gráficas y el diseño a 390 px se comprueban a mano en el navegador y así se reporta.
 - Componentes (`.test.tsx`, jsdom + user-event): crear y editar gasto, errores de validación, eliminar con confirmación, filtros, selector de mes y estados de presupuesto.
 
 ## 12. Reglas de trabajo para el agente
@@ -265,8 +266,9 @@ Cobertura mínima requerida:
 3. **Gastos**: formulario, CRUD, validaciones, filtros y búsqueda.
 4. **Presupuestos**: CRUD por categoría/mes, cálculos, alertas 80 % y 100 %.
 5. **Dashboard**: indicadores (total, nº de movimientos, categoría top, presupuesto usado), gráficas con Recharts, últimos movimientos, acceso rápido a registrar gasto, selector de mes, consistencia de datos.
-6. **Respaldo y calidad**: export/import, pruebas, casos límite, persistencia al recargar, accesibilidad.
-7. **Entrega**: build de producción, documentación de instalación, uso y limitaciones.
+6. **Categorías (RF-03)**: pantalla de gestión (crear, renombrar, icono y color, activar/desactivar, consultar el historial de gastos de cada categoría). Reutiliza `categoryService`; no se elimina una categoría con gastos. No incluye "preferencias" ni ajustes que no estén en los requisitos.
+7. **Respaldo y calidad**: pantalla de Configuración con export/import JSON (RF-07), pruebas de casos límite, persistencia al recargar, accesibilidad.
+8. **Entrega**: build de producción, PWA (`vite-plugin-pwa`, con confirmación previa), documentación de instalación, uso y limitaciones.
 
 No pasar a la siguiente fase sin cerrar la anterior.
 

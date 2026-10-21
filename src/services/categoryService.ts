@@ -4,9 +4,40 @@ import { ServiceError, type Category, type NewCategory } from '../types'
 import { MESSAGES } from './messages'
 import { isEntityId, requireText } from './validation'
 
-const COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/
+import { ALLOWED_COLORS, ALLOWED_ICONS, type AllowedColor, type AllowedIcon } from '../constants/categoryAppearance'
 
 export type CategoryChanges = Partial<Omit<Category, 'id'>>
+
+function validateCategoryName(name: string): string {
+  const trimmed = requireText(name, MESSAGES.categoryNameRequired)
+  if (trimmed.length > 30) throw new ServiceError('validation', MESSAGES.categoryNameTooLong)
+  return trimmed
+}
+
+function validateIcon(icon: string): string {
+  if (!ALLOWED_ICONS.includes(icon as AllowedIcon)) {
+    throw new ServiceError('validation', MESSAGES.categoryIconInvalid)
+  }
+  return icon
+}
+
+function validateColor(color: string): string {
+  if (!ALLOWED_COLORS.includes(color as AllowedColor)) {
+    throw new ServiceError('validation', MESSAGES.categoryColorInvalid)
+  }
+  return color
+}
+
+const normalizeName = (name: string) => name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+
+async function assertNameAvailable(name: string, excludeId?: number) {
+  const normalizedName = normalizeName(name)
+  const existing = await db.categories.toArray()
+  const duplicate = existing.find(
+    (c) => normalizeName(c.name) === normalizedName && c.id !== excludeId
+  )
+  if (duplicate) throw new ServiceError('conflict', MESSAGES.categoryNameDuplicate)
+}
 
 /** Creates the default categories once (safe to call on every app start). */
 export async function ensureDefaultCategories(): Promise<boolean> {
@@ -25,9 +56,13 @@ export async function getCategory(id: number): Promise<Category> {
   return category
 }
 
+export async function getCategoryExpenseCount(id: number): Promise<number> {
+  return db.expenses.where('categoryId').equals(id).count()
+}
+
 export async function createCategory(input: NewCategory): Promise<Category> {
-  const name = requireText(input.name, MESSAGES.categoryNameRequired)
-  const icon = requireText(input.icon, MESSAGES.categoryIconRequired)
+  const name = validateCategoryName(input.name)
+  const icon = validateIcon(input.icon)
   const color = validateColor(input.color)
 
   return db.transaction('rw', db.categories, async () => {
@@ -44,15 +79,25 @@ export async function updateCategory(id: number, changes: CategoryChanges): Prom
     const updated: Category = { ...existing }
 
     if (changes.name !== undefined) {
-      updated.name = requireText(changes.name, MESSAGES.categoryNameRequired)
+      updated.name = validateCategoryName(changes.name)
       await assertNameAvailable(updated.name, id)
     }
-    if (changes.icon !== undefined) updated.icon = requireText(changes.icon, MESSAGES.categoryIconRequired)
-    if (changes.color !== undefined) updated.color = validateColor(changes.color)
+    if (changes.icon !== undefined && changes.icon !== existing.icon) updated.icon = validateIcon(changes.icon)
+    if (changes.color !== undefined && changes.color !== existing.color) updated.color = validateColor(changes.color)
+    
     if (changes.active !== undefined) {
       if (typeof changes.active !== 'boolean') {
         throw new ServiceError('validation', MESSAGES.categoryActiveInvalid)
       }
+      
+      // Prevent deactivating the last active category
+      if (changes.active === false && existing.active === true) {
+        const activeCategories = await db.categories.filter(c => c.active).count()
+        if (activeCategories <= 1) {
+          throw new ServiceError('validation', MESSAGES.categoryLastActive)
+        }
+      }
+      
       updated.active = changes.active
     }
 
@@ -67,7 +112,15 @@ export async function updateCategory(id: number, changes: CategoryChanges): Prom
  */
 export async function deleteCategory(id: number): Promise<void> {
   await db.transaction('rw', db.categories, db.expenses, db.budgets, async () => {
-    await getCategory(id)
+    const existing = await getCategory(id)
+    
+    if (existing.active) {
+      const activeCategories = await db.categories.filter(c => c.active).count()
+      if (activeCategories <= 1) {
+        throw new ServiceError('validation', MESSAGES.categoryLastActive)
+      }
+    }
+    
     const expenseCount = await db.expenses.where('categoryId').equals(id).count()
     if (expenseCount > 0) throw new ServiceError('integrity', MESSAGES.categoryHasExpenses)
     await db.budgets.where('categoryId').equals(id).delete()
@@ -75,18 +128,4 @@ export async function deleteCategory(id: number): Promise<void> {
   })
 }
 
-function validateColor(color: unknown): string {
-  if (typeof color !== 'string' || !COLOR_PATTERN.test(color)) {
-    throw new ServiceError('validation', MESSAGES.categoryColorInvalid)
-  }
-  return color
-}
 
-/** Names are unique ignoring case, so "salud" and "Salud" cannot coexist. */
-async function assertNameAvailable(name: string, exceptId?: number): Promise<void> {
-  const wanted = name.toLocaleLowerCase('es')
-  const clash = await db.categories
-    .filter((category) => category.id !== exceptId && category.name.toLocaleLowerCase('es') === wanted)
-    .first()
-  if (clash) throw new ServiceError('validation', MESSAGES.categoryNameDuplicate)
-}

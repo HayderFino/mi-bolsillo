@@ -4,6 +4,11 @@ import {
   calculateTopCategories,
   calculateTotalExpenses,
   filterExpensesByMonth,
+  calculateMovementCount,
+  calculateDistributionByCategory,
+  calculateEvolutionByDay,
+  calculateCategoryComparison,
+  calculateBudgetSummary
 } from '../src/services/statisticsService'
 import type { Budget, Category, Expense } from '../src/types'
 
@@ -69,6 +74,18 @@ describe('statisticsService', () => {
       expect(top[1].category.name).toBe('Comida')
       expect(top[1].amount).toBe(150)
     })
+
+    it('handles ties deterministically (by amount desc, then name asc)', () => {
+      const catA: Category = { id: 3, name: 'Zanahorias', icon: '🥕', color: '#ff0000', active: true }
+      const catB: Category = { id: 4, name: 'Arándanos', icon: '🫐', color: '#0000ff', active: true }
+      const expenses = [
+        createExpense(1, 300, '2023-10-01', 3),
+        createExpense(2, 300, '2023-10-05', 4),
+      ]
+      const top = calculateTopCategories(expenses, [...categories, catA, catB], month)
+      expect(top[0].category.name).toBe('Arándanos') // 'A' comes before 'Z'
+      expect(top[1].category.name).toBe('Zanahorias')
+    })
   })
 
   describe('calculateBudgetProgress', () => {
@@ -128,6 +145,180 @@ describe('statisticsService', () => {
 
       const progress = calculateBudgetProgress(expenses, budgets, allCategories, month)
       expect(progress.some(p => p.category.id === 3)).toBe(false)
+    })
+  })
+
+  describe('calculateMovementCount', () => {
+    it('returns 0 for empty month or expenses from other months', () => {
+      expect(calculateMovementCount([], month)).toBe(0)
+      const otherMonth = [createExpense(1, 100, '2023-09-15', 1)]
+      expect(calculateMovementCount(otherMonth, month)).toBe(0)
+    })
+
+    it('returns correct count for expenses at the boundaries of the month', () => {
+      const expenses = [
+        createExpense(1, 100, '2023-10-01', 1),
+        createExpense(2, 200, '2023-10-31', 1),
+      ]
+      expect(calculateMovementCount(expenses, month)).toBe(2)
+    })
+  })
+
+  describe('calculateDistributionByCategory', () => {
+    it('returns correct distribution sorting and grouping', () => {
+      const expenses = [
+        createExpense(1, 100, '2023-10-01', 1),
+        createExpense(2, 300, '2023-10-05', 2),
+        createExpense(3, 50, '2023-10-10', 1),
+      ]
+      const dist = calculateDistributionByCategory(expenses, categories, month)
+      expect(dist).toHaveLength(2)
+      expect(dist[0]).toEqual({ name: 'Transporte', value: 300, color: '#00ff00' })
+      expect(dist[1]).toEqual({ name: 'Comida', value: 150, color: '#ff0000' })
+    })
+
+    it('handles zero total without NaNs', () => {
+      const dist = calculateDistributionByCategory([], categories, month)
+      expect(dist).toEqual([]) // No categories have expenses > 0
+    })
+
+    it('includes inactive categories with expenses in top, distribution, and comparison', () => {
+      const inactiveCat: Category = { id: 99, name: 'Inactiva', icon: '❌', color: '#000000', active: false }
+      const allCats = [...categories, inactiveCat]
+      const expenses = [createExpense(1, 500, '2023-10-01', 99)]
+      
+      const top = calculateTopCategories(expenses, allCats, month)
+      expect(top[0].category.name).toBe('Inactiva')
+      
+      const dist = calculateDistributionByCategory(expenses, allCats, month)
+      expect(dist[0].name).toBe('Inactiva')
+      
+      const comp = calculateCategoryComparison(expenses, [], allCats, month)
+      expect(comp[0].name).toBe('Inactiva')
+    })
+
+    it('handles ties in top category', () => {
+      const expenses = [
+        createExpense(1, 300, '2023-10-01', 1),
+        createExpense(2, 300, '2023-10-05', 2),
+      ]
+      const dist = calculateDistributionByCategory(expenses, categories, month)
+      expect(dist[0].value).toBe(300)
+      expect(dist[1].value).toBe(300)
+    })
+  })
+
+  describe('calculateEvolutionByDay', () => {
+    it('groups by day and sorts chronologically, filling missing days with 0 (28 days in Feb)', () => {
+      const expenses = [
+        createExpense(1, 100, '2023-02-15', 1),
+        createExpense(2, 200, '2023-02-01', 2),
+      ]
+      const evo = calculateEvolutionByDay(expenses, '2023-02')
+      expect(evo).toHaveLength(28)
+      expect(evo[0]).toEqual({ date: '2023-02-01', amount: 200 })
+      expect(evo[14]).toEqual({ date: '2023-02-15', amount: 100 })
+      expect(evo[27]).toEqual({ date: '2023-02-28', amount: 0 })
+    })
+
+    it('handles leap years (29 days in Feb)', () => {
+      const evo = calculateEvolutionByDay([], '2024-02')
+      expect(evo).toHaveLength(29)
+      expect(evo[28]).toEqual({ date: '2024-02-29', amount: 0 })
+    })
+  })
+
+  describe('calculateCategoryComparison', () => {
+    it('returns the same format as distribution but can be used for bar charts and includes limits', () => {
+      const expenses = [createExpense(1, 100, '2023-10-15', 1)]
+      const budgets: Budget[] = [{ id: '1_2023-10', categoryId: 1, yearMonth: month, limitAmount: 1000 }]
+      const comp = calculateCategoryComparison(expenses, budgets, categories, month)
+      expect(comp).toEqual([{ name: 'Comida', value: 100, color: '#ff0000', limit: 1000, percent: 10 }])
+    })
+  })
+  
+  describe('calculateBudgetSummary', () => {
+    const budgets: Budget[] = [
+      { id: '1_2023-10', categoryId: 1, yearMonth: month, limitAmount: 1000 },
+      { id: '2_2023-10', categoryId: 2, yearMonth: month, limitAmount: 2000 },
+    ]
+
+    it('returns "none" status if no budgets are set and no NaN', () => {
+      const summary = calculateBudgetSummary([], [], categories, month)
+      expect(summary).toEqual({ totalLimit: 0, totalSpent: 0, percent: 0, status: 'none', warningCount: 0, exceededCount: 0 })
+      expect(Number.isNaN(summary.percent)).toBe(false)
+    })
+
+    it('counts inactive categories with budgets', () => {
+      const inactiveCat: Category = { id: 99, name: 'Inactiva', icon: '❌', color: '#000000', active: false }
+      const inactiveBudgets: Budget[] = [{ id: '99_2023-10', categoryId: 99, yearMonth: month, limitAmount: 1000 }]
+      const summary = calculateBudgetSummary([createExpense(1, 500, '2023-10-01', 99)], inactiveBudgets, [...categories, inactiveCat], month)
+      expect(summary.totalLimit).toBe(1000)
+      expect(summary.totalSpent).toBe(500)
+      expect(summary.percent).toBe(50)
+    })
+
+    it('calculates correctly for different thresholds (79%, 80%, 100%, 101%)', () => {
+      // 79% (ok)
+      let summary = calculateBudgetSummary([
+        createExpense(1, 2370, '2023-10-01', 1)
+      ], budgets, categories, month)
+      expect(summary.totalLimit).toBe(3000)
+      expect(summary.totalSpent).toBe(2370)
+      expect(summary.percent).toBe(79)
+      expect(summary.status).toBe('ok')
+      expect(summary.exceededCount).toBe(1) // category 1 exceeded its individual 1000 limit! (spent 2370)
+
+      // Let's do tests that actually hit the overall thresholds without forcing individual limits.
+      // 80% (warning) overall
+      summary = calculateBudgetSummary([
+        createExpense(1, 800, '2023-10-01', 1),
+        createExpense(2, 1600, '2023-10-01', 2),
+      ], budgets, categories, month)
+      expect(summary.percent).toBe(80)
+      expect(summary.status).toBe('warning')
+      expect(summary.warningCount).toBe(2) // Both are exactly at 80%
+
+      // 100% (warning, capped) overall
+      summary = calculateBudgetSummary([
+        createExpense(1, 1000, '2023-10-01', 1),
+        createExpense(2, 2000, '2023-10-01', 2),
+      ], budgets, categories, month)
+      expect(summary.percent).toBe(100)
+      expect(summary.status).toBe('warning')
+      expect(summary.warningCount).toBe(2)
+
+      // 101% (exceeded, percent capped at 100) overall
+      summary = calculateBudgetSummary([
+        createExpense(1, 1010, '2023-10-01', 1),
+        createExpense(2, 2020, '2023-10-01', 2),
+      ], budgets, categories, month)
+      expect(summary.percent).toBe(100)
+      expect(summary.status).toBe('exceeded')
+      expect(summary.exceededCount).toBe(2)
+    })
+  })
+
+  describe('consistency invariant', () => {
+    it('distribution sum, comparison sum, and evolution sum must equal total expenses', () => {
+      const inactiveCat: Category = { id: 99, name: 'Inactiva', icon: '❌', color: '#000000', active: false }
+      const allCats = [...categories, inactiveCat]
+      const expenses = [
+        createExpense(1, 100, '2023-10-01', 1),
+        createExpense(2, 200, '2023-10-15', 2),
+        createExpense(3, 500, '2023-10-31', 99), // Inactive
+      ]
+      
+      const total = calculateTotalExpenses(expenses, month)
+      
+      const distSum = calculateDistributionByCategory(expenses, allCats, month).reduce((sum, d) => sum + d.value, 0)
+      const compSum = calculateCategoryComparison(expenses, [], allCats, month).reduce((sum, c) => sum + c.value, 0)
+      const evoSum = calculateEvolutionByDay(expenses, month).reduce((sum, e) => sum + e.amount, 0)
+      
+      expect(distSum).toBe(total)
+      expect(compSum).toBe(total)
+      expect(evoSum).toBe(total)
+      expect(total).toBe(800)
     })
   })
 })

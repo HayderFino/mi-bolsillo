@@ -12,7 +12,7 @@ import { validExpense } from './helpers'
 describe('persistence across connections', () => {
   it('keeps categories, expenses and budgets after closing and reopening the database', async () => {
     await ensureDefaultCategories()
-    const custom = await createCategory({ name: 'Mascotas', icon: 'paw-print', color: '#336699' })
+    const custom = await createCategory({ name: 'Mascotas', icon: 'dog', color: '#B4493F' })
     const [first] = await listCategories()
     const expense = await createExpense(validExpense(first.id, { amount: 99000, date: '2025-12-31' }))
     const budget = await setBudget({ categoryId: first.id, yearMonth: '2025-12', limitAmount: 400000 })

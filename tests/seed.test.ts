@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { DEFAULT_CATEGORIES } from '../src/db/seed'
+import { db } from '../src/db/database'
 import {
-  deleteCategory,
   ensureDefaultCategories,
   listCategories,
 } from '../src/services/categoryService'
@@ -38,7 +38,7 @@ describe('default categories seed', () => {
 
   it('runs only once: deleted defaults are never recreated', async () => {
     await ensureDefaultCategories()
-    for (const category of await listCategories()) await deleteCategory(category.id)
+    await db.categories.clear()
     expect(await listCategories({ includeInactive: true })).toHaveLength(0)
 
     expect(await ensureDefaultCategories()).toBe(false)

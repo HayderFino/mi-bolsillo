@@ -20,7 +20,6 @@ export function BudgetsPage() {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   
   const categories = useCategories()
-  const activeCategories = useMemo(() => categories?.filter(c => c.active) ?? [], [categories])
 
   // Get budgets for the selected month
   const budgets = useLiveQuery(() => listBudgets(yearMonth), [yearMonth])
@@ -39,6 +38,12 @@ export function BudgetsPage() {
   const progressByCat = useMemo(() => new Map(progress.map(p => [p.category.id, p])), [progress])
   const budgetByCat = useMemo(() => new Map((budgets ?? []).map(b => [b.categoryId, b])), [budgets])
 
+  const categoriesToShow = useMemo(() => {
+    if (!categories) return []
+    // Show active categories, plus any inactive category that has a budget this month
+    return categories.filter(c => c.active || budgetByCat.has(c.id))
+  }, [categories, budgetByCat])
+
   if (!categories || !budgets || !expenses) {
     return (
       <div className={styles.page}>
@@ -55,11 +60,11 @@ export function BudgetsPage() {
 
       <MonthSelector yearMonth={yearMonth} onChange={setYearMonth} />
 
-      {activeCategories.length === 0 ? (
+      {categoriesToShow.length === 0 ? (
         <p className={styles.empty}>{es.budgets.noCategoryAvailable}</p>
       ) : (
         <ul className={styles.list}>
-          {activeCategories.map((category) => {
+          {categoriesToShow.map((category) => {
             const stat = progressByCat.get(category.id)
             const budget = budgetByCat.get(category.id)
             // If stat is undefined, it means there is no budget for this category.
@@ -96,9 +101,10 @@ export function BudgetsPage() {
                         data-status={stat.status}
                         style={{ width: `${stat.percent}%` }}
                         role="progressbar"
-                        aria-valuenow={stat.spent}
+                        aria-valuenow={Math.min(stat.spent, stat.limit)}
                         aria-valuemin={0}
                         aria-valuemax={stat.limit}
+                        aria-valuetext={`${es.budgets.status[stat.status]}: ${formatCOP(stat.spent)} de ${formatCOP(stat.limit)}`}
                         aria-label={`Progreso del presupuesto de ${category.name}`}
                       />
                     </div>

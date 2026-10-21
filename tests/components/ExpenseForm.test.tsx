@@ -54,4 +54,26 @@ it('submits a valid expense', async () => {
   })
 })
 
+it('shows service errors when submission fails at the service level', async () => {
+  const user = userEvent.setup()
+  
+  const expenseService = await import('../../src/services/expenseService')
+  const { ServiceError } = await import('../../src/types')
+  
+  const spy = vi.spyOn(expenseService, 'createExpense').mockRejectedValueOnce(
+    new ServiceError('validation', 'Error desde el servicio: importe inválido.')
+  )
+  
+  render(<ExpenseForm categories={mockCategories} onCancel={vi.fn()} onSaved={vi.fn()} amountRef={{ current: null }} />)
+  
+  await user.type(screen.getByLabelText(/Importe/i), '15000')
+  await user.type(screen.getByLabelText(/Descripción/i), 'Almuerzo')
+  await user.selectOptions(screen.getByLabelText(/Categoría/i), '1')
+  
+  await user.click(screen.getByRole('button', { name: /Registrar gasto/i }))
+  
+  expect(await screen.findByText('Error desde el servicio: importe inválido.')).toBeInTheDocument()
+  
+  spy.mockRestore()
+})
 

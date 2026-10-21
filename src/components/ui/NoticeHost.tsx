@@ -6,7 +6,7 @@ import styles from './NoticeHost.module.css'
 export interface Notice {
   /** Changes on every new notice so the auto-dismiss timer restarts. */
   id: number
-  kind: 'success' | 'error'
+  kind: 'success' | 'error' | 'warning'
   message: string
 }
 

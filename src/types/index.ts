@@ -52,4 +52,4 @@ export class ServiceError extends Error {
   }
 }
 
-export type ServiceErrorCode = 'validation' | 'not_found' | 'integrity'
+export type ServiceErrorCode = 'validation' | 'not_found' | 'integrity' | 'conflict'

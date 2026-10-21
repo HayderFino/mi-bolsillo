@@ -1,0 +1,78 @@
+.selectorGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.selectorButton {
+  padding: 0.5rem;
+  border-radius: var(--radius-md);
+  transition: all 0.2s;
+  cursor: pointer;
+  background: transparent;
+  border: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  color: var(--text-muted);
+}
+
+.selectorButton:hover {
+  background-color: var(--surface-hover);
+}
+
+.selectorButton[aria-checked="true"] {
+  background-color: var(--primary-bg, #eff6ff);
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.colorButton {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: transparent;
+}
+
+.colorButton:hover {
+  transform: scale(1.1);
+}
+
+.colorButton[aria-checked="true"] {
+  border-color: var(--primary-color);
+  transform: scale(1.1);
+  box-shadow: 0 0 0 2px var(--surface-color), 0 0 0 4px var(--primary-color);
+}
+
+.checkIcon {
+  color: white; /* Contrast for checkmark */
+}
+
+.previewWrapper {
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
