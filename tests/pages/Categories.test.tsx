@@ -107,9 +107,14 @@ it('allows editing a category with a legacy icon/color outside the allowed lists
   await user.type(nameInput, 'Renamed')
   
   await user.click(screen.getByRole('button', { name: /Guardar/i }))
-  
-  expect(await screen.findByText('Renamed', {}, { timeout: 3000 })).toBeInTheDocument()
-  
+
+  // Wait for dialog to close and list to update (useLiveQuery can be slow in CI)
+  await waitFor(() => {
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  }, { timeout: 5000 })
+
+  expect(await screen.findByText('Renamed', undefined, { timeout: 5000 })).toBeInTheDocument()
+
   // Check db that it preserved legacy values
   const cat = await db.categories.get(id)
   expect(cat?.icon).toBe('invalid-icon')
